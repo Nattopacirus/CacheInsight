@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { parse } from "papaparse"; // ใช้สำหรับอ่านไฟล์ CSV
+import Papa from "papaparse"; // ใช้สำหรับอ่านไฟล์ CSV
 
 const CacheSimulation = () => {
   const [memorySize, setMemorySize] = useState(64);
@@ -65,37 +65,52 @@ const CacheSimulation = () => {
     "0x1060", "0x1061", "0x1062", "0x1063"
   ];
 
-  // ฟังก์ชันจัดการการอัปโหลดไฟล์
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) {
-      setError("No file selected.");
-      return;
+        setError("No file selected.");
+        return;
     }
 
-    // ตรวจสอบประเภทไฟล์
-    if (file.type !== "text/csv") {
-      setError("Please upload a valid CSV file.");
-      return;
+    if (!file.name.endsWith(".csv")) {
+        setError("Please upload a valid CSV file.");
+        return;
     }
 
-    // อ่านไฟล์ CSV
     const reader = new FileReader();
     reader.onload = (e) => {
-      const text = e.target.result;
-      const result = parse(text, { header: true }); // ใช้ papaparse เพื่อแปลง CSV เป็นออบเจกต์
-      if (result.errors.length > 0) {
-        setError("Error parsing CSV file.");
-        return;
-      }
+        const text = e.target.result;
 
-      // อัปเดต state ด้วยข้อมูลจากไฟล์
-      setFileData(result.data);
-      setFileName(file.name);
-      setError(""); // ล้างข้อผิดพลาด
+        const result = Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+            complete: (parsedResult) => {
+                // Check if there were parsing errors
+                if (parsedResult.errors.length > 0) {
+                    setError("Error parsing CSV file.");
+                    console.error("Parsing Errors:", parsedResult.errors);
+                    return;
+                }
+
+                if (!parsedResult.data || parsedResult.data.length === 0) {
+                    setError("CSV file is empty or has incorrect format.");
+                    return;
+                }
+
+                console.log(parsedResult.data);  // Check parsed data
+                setFileData(parsedResult.data);
+                setFileName(file.name);
+                setError("");
+            },
+            // Try other options for better compatibility with certain CSV formats
+            delimiter: ",", // Can be changed to ';' or another delimiter if necessary
+        });
     };
-    reader.readAsText(file);
-  };
+
+    reader.readAsText(file, "UTF-8");
+};
+
 
   const handleUseSampleData = (sampleData, sampleName) => {
     // แปลงข้อมูลตัวอย่างให้เป็นรูปแบบที่โปรแกรมคาดหวัง
