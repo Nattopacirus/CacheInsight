@@ -15,18 +15,18 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend);
 
-const calculateSetAssociativeCache = (cacheSize, blockSize, associativity, fileData, replacementPolicy) => {
-  const cacheSizeBytes = cacheSize * 1024;
-  const numberOfBlocks = cacheSizeBytes / blockSize;
-  const numberOfSets = numberOfBlocks / associativity;
+const calculateSetAssociativeCache = (cacheSize, blockSize, associativity, fileData, replacementPolicy, addressSize) => {
+  const cacheSizeBytes = cacheSize * 1024; // แปลง cacheSize จาก KB เป็น Bytes
+  const numberOfBlocks = cacheSizeBytes / blockSize; // จำนวนบล็อกทั้งหมดในแคช
+  const numberOfSets = numberOfBlocks / associativity; // จำนวนเซตในแคช
 
   if (!Number.isInteger(numberOfSets) || numberOfSets <= 0) {
-    throw new Error("Invalid number of sets");
+    throw new Error("Invalid number of sets. Ensure cache size, block size, and associativity are compatible.");
   }
 
-  const offsetBits = Math.log2(blockSize);
-  const indexBits = Math.log2(numberOfSets);
-  const tagBits = 16 - offsetBits - indexBits;
+  const offsetBits = Math.log2(blockSize); // จำนวนบิตของ offset
+  const indexBits = Math.log2(numberOfSets); // จำนวนบิตของ index
+  const tagBits = addressSize - offsetBits - indexBits; // จำนวนบิตของ tag
 
   // Initialize cache as a 2D array (sets x associativity)
   const cache = Array.from({ length: numberOfSets }, () =>
@@ -117,7 +117,7 @@ const calculateSetAssociativeCache = (cacheSize, blockSize, associativity, fileD
 const CacheResults_SetA = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { memorySize, cacheSize, blockSize, associativity, replacementPolicy, fileData, fileName } = location.state || {};
+  const { memorySize, cacheSize, blockSize, associativity, replacementPolicy, fileData, fileName, addressSize } = location.state || {};
 
   if (
     !location.state ||
@@ -212,6 +212,7 @@ const CacheResults_SetA = () => {
             <p className="text-lg">Block Size: {blockSize} B</p>
             <p className="text-lg">Associativity: {associativity}-way</p>
             <p className="text-lg">Replacement Policy: {replacementPolicy}</p>
+            <p className="text-lg">Address Size: {addressSize} bits</p> {/* เพิ่มบรรทัดนี้ */}
           </div>
 
           <div>

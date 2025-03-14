@@ -11,7 +11,9 @@ const CacheSimulation = () => {
   const [fileData, setFileData] = useState(null);
   const [fileName, setFileName] = useState("");
   const [mappingTechnique, setMappingTechnique] = useState("directMapped");
+  const [associativity, setAssociativity] = useState(2); // ค่าเริ่มต้นเป็น 2-way
   const [error, setError] = useState("");
+  const [addressSize, setAddressSize] = useState(32); // ค่าเริ่มต้นเป็น 32 บิต
 
   const navigate = useNavigate();
 
@@ -147,6 +149,12 @@ const CacheSimulation = () => {
       return;
     }
 
+    // ตรวจสอบ Associativity สำหรับ Set-Associative Cache
+    if (mappingTechnique === "setAssociative" && (isNaN(associativity) || associativity <= 0)) {
+      setError("Associativity must be greater than 0 for Set-Associative Cache.");
+      return;
+    }
+
     // แปลง Block Size จาก B เป็น KB
     const blockSizeKB = blockSize / 1024;
 
@@ -168,6 +176,8 @@ const CacheSimulation = () => {
       fileData,
       mappingTechnique,
       fileName,
+      associativity,
+      addressSize, // เพิ่ม addressSize ใน state
     };
 
     switch (mappingTechnique) {
@@ -269,6 +279,40 @@ const CacheSimulation = () => {
               <option value="fullyAssociative">Fully Associative</option>
             </select>
           </div>
+
+          <div>
+            <label className="block font-semibold text-gray-700 mb-2">Address Size (bits):</label>
+            <select
+              className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={addressSize}
+              onChange={(e) => setAddressSize(parseInt(e.target.value))}
+            >
+              <option value={16}>16 bits</option>
+              <option value={32}>32 bits</option>
+              <option value={64}>64 bits</option>
+            </select>
+            <p className="text-sm text-gray-500 mt-1">Select the address size in bits.</p>
+          </div>
+
+          {mappingTechnique === "setAssociative" && (
+            <div>
+              <label className="block font-semibold text-gray-700 mb-2">Associativity:</label>
+              <select
+                className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={associativity}
+                onChange={(e) => setAssociativity(parseInt(e.target.value))}
+              >
+                <option value={2}>2-way</option>
+                <option value={4}>4-way</option>
+                <option value={8}>8-way</option>
+                <option value={16}>16-way</option>
+              </select>
+              <p className="text-sm text-gray-500 mt-1">
+                Associativity is only applicable for Set-Associative Cache.
+              </p>
+            </div>
+          )}
+
 
           {/* Replacement Policy Dropdown (เหมือนเดิม) */}
           <div>
