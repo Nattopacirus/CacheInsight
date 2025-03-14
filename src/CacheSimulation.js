@@ -102,7 +102,7 @@ const CacheSimulation = () => {
     const formattedData = sampleData.map((address) => ({
       "Address(Hex)": address,
     }));
-  
+
     // อัปเดต state ด้วยข้อมูลตัวอย่าง
     setFileData(formattedData);
     setFileName(sampleName);
@@ -115,34 +115,34 @@ const CacheSimulation = () => {
       setError("Please use sample data or upload a valid CSV file before starting the simulation.");
       return;
     }
-  
+
     if (isNaN(memorySize) || memorySize <= 0 || memorySize > 1024) {
       setError("Memory Size must be greater than 0 and less than or equal to 1024 MB.");
       return;
     }
-  
+
     if (isNaN(cacheSize) || cacheSize <= 0 || cacheSize > 256) {
       setError("Cache Size must be greater than 0 and less than or equal to 256 KB.");
       return;
     }
-  
+
     if (isNaN(blockSize) || blockSize <= 0 || blockSize > 64 * 1024) {
       setError("Block Size must be greater than 0 and less than or equal to 64 KB.");
       return;
     }
-  
+
     // แปลง Block Size จาก B เป็น KB
     const blockSizeKB = blockSize / 1024;
-  
+
     // ตรวจสอบว่า Cache Size ต้องมากกว่าหรือเท่ากับ Block Size (ในหน่วยเดียวกัน)
     if (cacheSize < blockSizeKB) {
       setError("Cache Size must be greater than or equal to Block Size.");
       return;
     }
-  
+
     // ล้างข้อผิดพลาดหากทุกอย่างถูกต้อง
     setError("");
-  
+
     // นำทางไปยังหน้าผลลัพธ์ที่ถูกต้อง
     const state = {
       memorySize,
@@ -153,7 +153,7 @@ const CacheSimulation = () => {
       mappingTechnique,
       fileName,
     };
-  
+
     switch (mappingTechnique) {
       case "directMapped":
         navigate("/results_direct", { state });
