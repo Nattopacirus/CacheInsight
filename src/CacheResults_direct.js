@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Bar, Line } from "react-chartjs-2";
 import {
@@ -15,6 +15,7 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend);
 
+// กำหนดฟังก์ชัน calculateDirectMappedCache ก่อนใช้งาน
 const calculateDirectMappedCache = (cacheSize, blockSize, fileData) => {
   const cacheSizeBytes = cacheSize * 1024;
 
@@ -65,7 +66,12 @@ const calculateDirectMappedCache = (cacheSize, blockSize, fileData) => {
 const CacheResults = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { cacheSize, blockSize, fileData } = location.state || {};
+  const { cacheSize, blockSize, fileData, fileName } = location.state || {};
+
+  // เลื่อนไปที่ด้านบนเมื่อคอมโพเนนต์ถูกเรนเดอร์
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   if (!location.state || isNaN(cacheSize) || isNaN(blockSize) || blockSize <= 0 || cacheSize <= 0 || !fileData?.length) {
     return (
@@ -152,11 +158,37 @@ const CacheResults = () => {
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Block Size:</h2>
             <Line data={lineChartData} options={chartOptions} />
           </div>
+
+          {/* CSV Data Preview */}
+          {fileData && (
+            <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+              <h2 className="text-lg font-semibold text-blue-700 mb-2">Data Preview:</h2>
+              <div className="overflow-y-scroll max-h-72">
+                <table className="w-full table-auto border-collapse">
+                  <thead>
+                    <tr className="bg-gray-200">
+                      <th className="px-4 py-2 text-left border-b">Address(Hex)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fileData.map((row, index) => (
+                      <tr key={index}>
+                        <td className="px-4 py-2 border-b">{row["Address(Hex)"]}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* ปุ่มย้อนกลับ */}
+        {/* Back Button */}
         <div className="mt-6 text-center">
-          <button 
+          <button
             className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
             onClick={() => navigate(-1)}
           >
