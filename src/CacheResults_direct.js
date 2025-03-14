@@ -17,11 +17,23 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointEleme
 
 const calculateDirectMappedCache = (cacheSize, blockSize, fileData) => {
   const cacheSizeBytes = cacheSize * 1024;
-  const numberOfBlocks = cacheSizeBytes / blockSize;
 
-  if (!Number.isInteger(numberOfBlocks) || numberOfBlocks <= 0) {
-    throw new Error("Invalid number of blocks");
+  // Validate block size
+  if (blockSize <= 0 || !Number.isInteger(blockSize)) {
+    throw new Error("Block size must be a positive integer.");
   }
+
+  // Validate cache size
+  if (cacheSizeBytes <= 0 || !Number.isInteger(cacheSizeBytes)) {
+    throw new Error("Cache size must be a positive integer.");
+  }
+
+  // Ensure cache size is a multiple of block size
+  if (cacheSizeBytes % blockSize !== 0) {
+    throw new Error("Cache size must be a multiple of block size.");
+  }
+
+  const numberOfBlocks = cacheSizeBytes / blockSize;
 
   const offsetBits = Math.log2(blockSize);
   const indexBits = Math.log2(numberOfBlocks);
@@ -60,7 +72,7 @@ const CacheResults = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
         <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
           <h1 className="text-3xl font-semibold text-blue-700 mb-2">Error</h1>
-          <p className="text-md text-gray-500">Invalid simulation data.</p>
+          <p className="text-md text-gray-500">Invalid simulation data. Please ensure cache size and block size are valid.</p>
         </div>
       </div>
     );

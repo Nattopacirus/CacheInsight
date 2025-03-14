@@ -1,3 +1,4 @@
+//CacheSimulation.js.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Papa from "papaparse"; // ใช้สำหรับอ่านไฟล์ CSV
@@ -68,48 +69,48 @@ const CacheSimulation = () => {
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) {
-        setError("No file selected.");
-        return;
+      setError("No file selected.");
+      return;
     }
 
     if (!file.name.endsWith(".csv")) {
-        setError("Please upload a valid CSV file.");
-        return;
+      setError("Please upload a valid CSV file.");
+      return;
     }
 
     const reader = new FileReader();
     reader.onload = (e) => {
-        const text = e.target.result;
+      const text = e.target.result;
 
-        const result = Papa.parse(text, {
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: true,
-            complete: (parsedResult) => {
-                // Check if there were parsing errors
-                if (parsedResult.errors.length > 0) {
-                    setError("Error parsing CSV file.");
-                    console.error("Parsing Errors:", parsedResult.errors);
-                    return;
-                }
+      const result = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: true,
+        complete: (parsedResult) => {
+          // Check if there were parsing errors
+          if (parsedResult.errors.length > 0) {
+            setError("Error parsing CSV file.");
+            console.error("Parsing Errors:", parsedResult.errors);
+            return;
+          }
 
-                if (!parsedResult.data || parsedResult.data.length === 0) {
-                    setError("CSV file is empty or has incorrect format.");
-                    return;
-                }
+          if (!parsedResult.data || parsedResult.data.length === 0) {
+            setError("CSV file is empty or has incorrect format.");
+            return;
+          }
 
-                console.log(parsedResult.data);  // Check parsed data
-                setFileData(parsedResult.data);
-                setFileName(file.name);
-                setError("");
-            },
-            // Try other options for better compatibility with certain CSV formats
-            delimiter: ",", // Can be changed to ';' or another delimiter if necessary
-        });
+          console.log(parsedResult.data);  // Check parsed data
+          setFileData(parsedResult.data);
+          setFileName(file.name);
+          setError("");
+        },
+        // Try other options for better compatibility with certain CSV formats
+        delimiter: ",", // Can be changed to ';' or another delimiter if necessary
+      });
     };
 
     reader.readAsText(file, "UTF-8");
-};
+  };
 
 
   const handleUseSampleData = (sampleData, sampleName) => {
@@ -219,29 +220,40 @@ const CacheSimulation = () => {
           {/* Cache Size Input (เหมือนเดิม) */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">Cache Size (KB):</label>
-            <input
-              type="number"
+            <select
               className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={cacheSize}
-              onChange={(e) => setCacheSize(Math.max(0, Math.min(256, e.target.value)))}
-              min="0"
-              max="256"
-            />
-            <p className="text-sm text-gray-500 mt-1">Cache Size must be between 0 and 256 KB.</p>
+              onChange={(e) => setCacheSize(parseInt(e.target.value))}
+            >
+              <option value={2}>2 KB</option>
+              <option value={4}>4 KB</option>
+              <option value={8}>8 KB</option>
+              <option value={16}>16 KB</option>
+              <option value={32}>32 KB</option>
+              <option value={64}>64 KB</option>
+              <option value={128}>128 KB</option>
+              <option value={256}>256 KB</option>
+            </select>
+            <p className="text-sm text-gray-500 mt-1">Cache Size must be between 2 and 256 KB.</p>
           </div>
 
-          {/* Block Size Input (เหมือนเดิม) */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">Block Size (B):</label>
-            <input
-              type="number"
+            <select
               className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={blockSize}
-              onChange={(e) => setBlockSize(Math.max(0, Math.min(64 * 1024, e.target.value)))}
-              min="0"
-              max="65536"
-            />
-            <p className="text-sm text-gray-500 mt-1">Block Size must be between 0 and 64 KB.</p>
+              onChange={(e) => setBlockSize(parseInt(e.target.value))}
+            >
+              <option value={2}>2 B</option>
+              <option value={4}>4 B</option>
+              <option value={8}>8 B</option>
+              <option value={16}>16 B</option>
+              <option value={32}>32 B</option>
+              <option value={64}>64 B</option>
+              <option value={128}>128 B</option>
+              <option value={256}>256 B</option>
+            </select>
+            <p className="text-sm text-gray-500 mt-1">Block Size must be between 2 and 256 B.</p>
           </div>
 
           {/* Cache Mapping Technique Dropdown (เหมือนเดิม) */}
