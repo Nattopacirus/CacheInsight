@@ -1,4 +1,3 @@
-//by nattopacirus
 import React, { useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Bar, Line } from "react-chartjs-2";
@@ -265,12 +264,19 @@ const CacheResults_Fully = () => {
 
     const aggregatedData = aggregateData(accessPattern, 100); // Aggregate every 100 accesses
 
+    // ตรวจสอบจำนวนข้อมูลในไฟล์
+    const isDataSmall = fileData.length <= 500; // ถ้าข้อมูลน้อยกว่า 500 Addresses
+
     // Generate access pattern data for the chart
     const accessPatternChartData = {
-        labels: aggregatedData.map(entry => entry.index),
+        labels: isDataSmall
+            ? accessPattern.map((_, i) => i + 1) // แสดงทีละจุด
+            : aggregatedData.map(entry => entry.index), // แสดงแบบ Aggregate
         datasets: [{
             label: 'Access Pattern',
-            data: aggregatedData.map(entry => entry.hitRate),
+            data: isDataSmall
+                ? accessPattern.map(entry => entry.hit ? 1 : 0) // แสดงทีละจุด
+                : aggregatedData.map(entry => entry.hitRate), // แสดงแบบ Aggregate
             borderColor: '#FF6384',
             backgroundColor: '#FF6384',
             fill: false,
@@ -343,6 +349,26 @@ const CacheResults_Fully = () => {
             legend: { position: "top" },
             title: { display: true },
         },
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Access Index'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Hit/Miss'
+                },
+                min: 0,
+                max: 1,
+                ticks: {
+                    stepSize: 1, // แสดงค่าเป็น 0 หรือ 1 เท่านั้น
+                    callback: (value) => value === 1 ? 'Hit' : 'Miss' // แสดงเป็น Hit/Miss แทนค่า 0/1
+                }
+            }
+        }
     };
 
     return (
