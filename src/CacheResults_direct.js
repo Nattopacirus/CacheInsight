@@ -18,17 +18,14 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointEleme
 const calculateDirectMappedCache = (cacheSize, blockSize, fileData) => {
     const cacheSizeBytes = cacheSize * 1024;
 
-    // Validate block size
     if (blockSize <= 0 || !Number.isInteger(blockSize)) {
         throw new Error("Block size must be a positive integer.");
     }
 
-    // Validate cache size
     if (cacheSizeBytes <= 0 || !Number.isInteger(cacheSizeBytes)) {
         throw new Error("Cache size must be a positive integer.");
     }
 
-    // Ensure cache size is a multiple of block size
     if (cacheSizeBytes % blockSize !== 0) {
         throw new Error("Cache size must be a multiple of block size.");
     }
@@ -69,12 +66,10 @@ const CacheResults = () => {
     const { cacheSize, blockSize, fileData, fileName, replacementPolicy, memorySize, mappingTechnique, associativity, addressSize } =
         location.state || {};
 
-    // Scroll to top when the component mounts
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
 
-    // Handle back button click
     const handleBack = () => {
         navigate("/", {
             state: {
@@ -91,7 +86,6 @@ const CacheResults = () => {
         });
     };
 
-    // Validate input data
     if (!location.state || isNaN(cacheSize) || isNaN(blockSize) || blockSize <= 0 || cacheSize <= 0 || !fileData?.length) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
@@ -148,68 +142,70 @@ const CacheResults = () => {
 
     return (
         <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
+            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-6xl border border-gray-200">
                 <div className="text-center mb-6">
                     <h1 className="text-3xl font-semibold text-blue-700 mb-2">Direct Mapped Cache Results</h1>
                     <p className="text-md text-gray-500">Results of the Direct Mapped Cache simulation.</p>
                 </div>
 
-                <div className="space-y-6">
-                    <div>
-                        <h2 className="text-xl font-semibold text-blue-700 mb-2">Simulation Results:</h2>
-                        <p className="text-lg">Hits: {hits}</p>
-                        <p className="text-lg">Misses: {misses}</p>
-                        <p className="text-lg">Hit Rate: {((hits / (hits + misses)) * 100).toFixed(2)}%</p>
-                    </div>
-
-                    <div>
-                        <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Parameters:</h2>
-                        <p className="text-lg">Cache Size: {cacheSize} KB</p>
-                        <p className="text-lg">Block Size: {blockSize} B</p>
-                    </div>
-
-                    <div>
-                        <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Access Results:</h2>
-                        <Bar data={barChartData} options={chartOptions} />
-                    </div>
-
-                    <div>
-                        <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Block Size:</h2>
-                        <Line data={lineChartData} options={chartOptions} />
-                    </div>
-
-                    {/* CSV Data Preview */}
-                    {fileData && (
-                        <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
-                            <h2 className="text-lg font-semibold text-blue-700 mb-2">Data Preview:</h2>
-                            <div className="overflow-y-scroll max-h-72">
-                                <table className="w-full table-auto border-collapse">
-                                    <thead>
-                                        <tr className="bg-gray-200">
-                                            <th className="px-4 py-2 text-left border-b">Address(Hex)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {fileData.map((row, index) => (
-                                            <tr key={index}>
-                                                <td className="px-4 py-2 border-b">{row["Address(Hex)"]}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <p className="text-sm text-gray-500 mt-2">
-                                {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
-                            </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-6">
+                        <div>
+                            <h2 className="text-xl font-semibold text-blue-700 mb-2">Simulation Results:</h2>
+                            <p className="text-lg">Hits: {hits}</p>
+                            <p className="text-lg">Misses: {misses}</p>
+                            <p className="text-lg">Hit Rate: {((hits / (hits + misses)) * 100).toFixed(2)}%</p>
                         </div>
-                    )}
+
+                        <div>
+                            <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Parameters:</h2>
+                            <p className="text-lg">Cache Size: {cacheSize} KB</p>
+                            <p className="text-lg">Block Size: {blockSize} B</p>
+                        </div>
+
+                        <div>
+                            <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Access Results:</h2>
+                            <Bar data={barChartData} options={chartOptions} />
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div>
+                            <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Block Size:</h2>
+                            <Line data={lineChartData} options={chartOptions} />
+                        </div>
+
+                        {fileData && (
+                            <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+                                <h2 className="text-lg font-semibold text-blue-700 mb-2">Data Preview:</h2>
+                                <div className="overflow-y-scroll max-h-72">
+                                    <table className="w-full table-auto border-collapse">
+                                        <thead>
+                                            <tr className="bg-gray-200">
+                                                <th className="px-4 py-2 text-left border-b">Address(Hex)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {fileData.map((row, index) => (
+                                                <tr key={index}>
+                                                    <td className="px-4 py-2 border-b">{row["Address(Hex)"]}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p className="text-sm text-gray-500 mt-2">
+                                    {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
-                {/* Back Button */}
                 <div className="mt-6 text-center">
                     <button
                         className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-                        onClick={handleBack} // ใช้ handleBack แทน navigate(-1)
+                        onClick={handleBack}
                     >
                         ← Back
                     </button>
