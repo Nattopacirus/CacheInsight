@@ -1,7 +1,7 @@
-//CacheSimulation.js.js
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Papa from "papaparse"; // ใช้สำหรับอ่านไฟล์ CSV
+// CacheSimulation.js
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom"; // เพิ่ม useLocation ตรงนี้
+import Papa from "papaparse";
 
 const CacheSimulation = () => {
   const [memorySize, setMemorySize] = useState(64);
@@ -11,60 +11,39 @@ const CacheSimulation = () => {
   const [fileData, setFileData] = useState(null);
   const [fileName, setFileName] = useState("");
   const [mappingTechnique, setMappingTechnique] = useState("directMapped");
+  const [associativity, setAssociativity] = useState(2);
   const [error, setError] = useState("");
+  const [addressSize, setAddressSize] = useState(32);
 
   const navigate = useNavigate();
+  const location = useLocation(); // ใช้ useLocation ที่นี่
 
-  // ข้อมูลตัวอย่างจาก sample_Random Access.csv
-  const sampleRandomAccessData = [
-    "0xd7f4", "0xaa82", "0x2bb9", "0x99ed", "0xffe8", "0x732b", "0xb18b", "0xae06",
-    "0x95e3", "0x3101", "0x7a2d", "0xb50d", "0x4257", "0x9859", "0x318", "0xbcbc",
-    "0x1734", "0x8eb2", "0x1a7b", "0xdd59", "0x8f4d", "0x6884", "0xd9d7", "0xb912",
-    "0x3ed8", "0xe093", "0xed0", "0x1345", "0x1bce", "0x9824", "0x2f07", "0xba75",
-    "0xdb07", "0xc9", "0x2040", "0xa920", "0x2316", "0x66f8", "0x8005", "0x4c88",
-    "0xe7b6", "0x4b2", "0xf056", "0x8c28", "0xed5b", "0x4f82", "0x6ac7", "0xd247",
-    "0x65b3", "0xf2", "0xeb3a", "0x9982", "0x73f4", "0x14c9", "0x64b1", "0xa4",
-    "0xf5d3", "0x8dc2", "0x7782", "0x3a26", "0xc00e", "0xd7ac", "0x9210", "0x800c",
-    "0x7feb", "0xdbec", "0xfbf6", "0xca14", "0x1ff2", "0xd89e", "0xad", "0x59cb",
-    "0xfaf", "0xa995", "0xa02e", "0x9ace", "0x5eea", "0x37e4", "0x42e4", "0x6c83",
-    "0xdcd6", "0x5ad5", "0xd244", "0x3f22", "0xbc23", "0x8d8", "0x4750", "0x4a92",
-    "0x74f5", "0x67bc", "0x9620", "0x2dcb", "0x1b93", "0x5b32", "0xc223", "0xd7ba",
-    "0x1816", "0xaadc", "0x3b2d", "0x61c2"
-  ];
+  // รับค่าสถานะที่ส่งกลับมาและอัปเดต state
+  useEffect(() => {
+    if (location.state) {
+      const {
+        memorySize,
+        cacheSize,
+        blockSize,
+        replacementPolicy,
+        fileData,
+        fileName,
+        mappingTechnique,
+        associativity,
+        addressSize,
+      } = location.state;
 
-  // ข้อมูลตัวอย่างจาก sample_Repeated Access.csv
-  const sampleRepeatedAccessData = [
-    "0x995d", "0x7da", "0x9902", "0x1d8e", "0x28e7", "0x775f", "0xbb70", "0x2bbb",
-    "0x2aec", "0xa5c5", "0x77c2", "0xffc8", "0x7c08", "0x9fb9", "0x14fa", "0xd2d",
-    "0xe092", "0x8836", "0x8999", "0xbd5f", "0x995d", "0x7da", "0x9902", "0x1d8e",
-    "0x28e7", "0x775f", "0xbb70", "0x2bbb", "0x2aec", "0xa5c5", "0x77c2", "0xffc8",
-    "0x7c08", "0x9fb9", "0x14fa", "0xd2d", "0xe092", "0x8836", "0x8999", "0xbd5f",
-    "0x995d", "0x7da", "0x9902", "0x1d8e", "0x28e7", "0x775f", "0xbb70", "0x2bbb",
-    "0x2aec", "0xa5c5", "0x77c2", "0xffc8", "0x7c08", "0x9fb9", "0x14fa", "0xd2d",
-    "0xe092", "0x8836", "0x8999", "0xbd5f", "0x995d", "0x7da", "0x9902", "0x1d8e",
-    "0x28e7", "0x775f", "0xbb70", "0x2bbb", "0x2aec", "0xa5c5", "0x77c2", "0xffc8",
-    "0x7c08", "0x9fb9", "0x14fa", "0xd2d", "0xe092", "0x8836", "0x8999", "0xbd5f",
-    "0x995d", "0x7da", "0x9902", "0x1d8e", "0x28e7", "0x775f", "0xbb70", "0x2bbb",
-    "0x2aec", "0xa5c5", "0x77c2", "0xffc8", "0x7c08", "0x9fb9", "0x14fa", "0xd2d",
-    "0xe092", "0x8836", "0x8999", "0xbd5f"
-  ];
-
-  // ข้อมูลตัวอย่างจาก sample_Sequential Access.csv
-  const sampleSequentialAccessData = [
-    "0x1000", "0x1001", "0x1002", "0x1003", "0x1004", "0x1005", "0x1006", "0x1007",
-    "0x1008", "0x1009", "0x100a", "0x100b", "0x100c", "0x100d", "0x100e", "0x100f",
-    "0x1010", "0x1011", "0x1012", "0x1013", "0x1014", "0x1015", "0x1016", "0x1017",
-    "0x1018", "0x1019", "0x101a", "0x101b", "0x101c", "0x101d", "0x101e", "0x101f",
-    "0x1020", "0x1021", "0x1022", "0x1023", "0x1024", "0x1025", "0x1026", "0x1027",
-    "0x1028", "0x1029", "0x102a", "0x102b", "0x102c", "0x102d", "0x102e", "0x102f",
-    "0x1030", "0x1031", "0x1032", "0x1033", "0x1034", "0x1035", "0x1036", "0x1037",
-    "0x1038", "0x1039", "0x103a", "0x103b", "0x103c", "0x103d", "0x103e", "0x103f",
-    "0x1040", "0x1041", "0x1042", "0x1043", "0x1044", "0x1045", "0x1046", "0x1047",
-    "0x1048", "0x1049", "0x104a", "0x104b", "0x104c", "0x104d", "0x104e", "0x104f",
-    "0x1050", "0x1051", "0x1052", "0x1053", "0x1054", "0x1055", "0x1056", "0x1057",
-    "0x1058", "0x1059", "0x105a", "0x105b", "0x105c", "0x105d", "0x105e", "0x105f",
-    "0x1060", "0x1061", "0x1062", "0x1063"
-  ];
+      setMemorySize(memorySize);
+      setCacheSize(cacheSize);
+      setBlockSize(blockSize);
+      setReplacementPolicy(replacementPolicy);
+      setFileData(fileData);
+      setFileName(fileName);
+      setMappingTechnique(mappingTechnique);
+      setAssociativity(associativity);
+      setAddressSize(addressSize);
+    }
+  }, [location.state]);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -147,6 +126,12 @@ const CacheSimulation = () => {
       return;
     }
 
+    // ตรวจสอบ Associativity สำหรับ Set-Associative Cache
+    if (mappingTechnique === "setAssociative" && (isNaN(associativity) || associativity <= 0)) {
+      setError("Associativity must be greater than 0 for Set-Associative Cache.");
+      return;
+    }
+
     // แปลง Block Size จาก B เป็น KB
     const blockSizeKB = blockSize / 1024;
 
@@ -168,6 +153,8 @@ const CacheSimulation = () => {
       fileData,
       mappingTechnique,
       fileName,
+      associativity,
+      addressSize, // เพิ่ม addressSize ใน state
     };
 
     switch (mappingTechnique) {
@@ -270,6 +257,40 @@ const CacheSimulation = () => {
             </select>
           </div>
 
+          <div>
+            <label className="block font-semibold text-gray-700 mb-2">Address Size (bits):</label>
+            <select
+              className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={addressSize}
+              onChange={(e) => setAddressSize(parseInt(e.target.value))}
+            >
+              <option value={16}>16 bits</option>
+              <option value={32}>32 bits</option>
+              <option value={64}>64 bits</option>
+            </select>
+            <p className="text-sm text-gray-500 mt-1">Select the address size in bits.</p>
+          </div>
+
+          {mappingTechnique === "setAssociative" && (
+            <div>
+              <label className="block font-semibold text-gray-700 mb-2">Associativity:</label>
+              <select
+                className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={associativity}
+                onChange={(e) => setAssociativity(parseInt(e.target.value))}
+              >
+                <option value={2}>2-way</option>
+                <option value={4}>4-way</option>
+                <option value={8}>8-way</option>
+                <option value={16}>16-way</option>
+              </select>
+              <p className="text-sm text-gray-500 mt-1">
+                Associativity is only applicable for Set-Associative Cache.
+              </p>
+            </div>
+          )}
+
+
           {/* Replacement Policy Dropdown (เหมือนเดิม) */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">Replacement Policy:</label>
@@ -304,28 +325,6 @@ const CacheSimulation = () => {
               />
             </label>
             <p className="text-sm text-gray-500 mt-1">Upload a CSV file containing memory access data.</p>
-          </div>
-
-          {/* ปุ่มใช้ข้อมูลตัวอย่าง (เหมือนเดิม) */}
-          <div className="space-y-4">
-            <button
-              onClick={() => handleUseSampleData(sampleRandomAccessData, "Random Access Sample Data")}
-              className="w-full p-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              Use Random Access Sample Data
-            </button>
-            <button
-              onClick={() => handleUseSampleData(sampleRepeatedAccessData, "Repeated Access Sample Data")}
-              className="w-full p-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              Use Repeated Access Sample Data
-            </button>
-            <button
-              onClick={() => handleUseSampleData(sampleSequentialAccessData, "Sequential Access Sample Data")}
-              className="w-full p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Use Sequential Access Sample Data
-            </button>
           </div>
 
           {/* CSV Data Preview (เหมือนเดิม) */}
@@ -366,5 +365,4 @@ const CacheSimulation = () => {
     </div>
   );
 };
-
 export default CacheSimulation;
