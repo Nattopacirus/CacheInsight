@@ -1,7 +1,7 @@
-//CacheSimulation.js.js
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Papa from "papaparse"; // ใช้สำหรับอ่านไฟล์ CSV
+// CacheSimulation.js
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom"; // เพิ่ม useLocation ตรงนี้
+import Papa from "papaparse";
 
 const CacheSimulation = () => {
   const [memorySize, setMemorySize] = useState(64);
@@ -11,11 +11,39 @@ const CacheSimulation = () => {
   const [fileData, setFileData] = useState(null);
   const [fileName, setFileName] = useState("");
   const [mappingTechnique, setMappingTechnique] = useState("directMapped");
-  const [associativity, setAssociativity] = useState(2); // ค่าเริ่มต้นเป็น 2-way
+  const [associativity, setAssociativity] = useState(2);
   const [error, setError] = useState("");
-  const [addressSize, setAddressSize] = useState(32); // ค่าเริ่มต้นเป็น 32 บิต
+  const [addressSize, setAddressSize] = useState(32);
 
   const navigate = useNavigate();
+  const location = useLocation(); // ใช้ useLocation ที่นี่
+
+  // รับค่าสถานะที่ส่งกลับมาและอัปเดต state
+  useEffect(() => {
+    if (location.state) {
+      const {
+        memorySize,
+        cacheSize,
+        blockSize,
+        replacementPolicy,
+        fileData,
+        fileName,
+        mappingTechnique,
+        associativity,
+        addressSize,
+      } = location.state;
+
+      setMemorySize(memorySize);
+      setCacheSize(cacheSize);
+      setBlockSize(blockSize);
+      setReplacementPolicy(replacementPolicy);
+      setFileData(fileData);
+      setFileName(fileName);
+      setMappingTechnique(mappingTechnique);
+      setAssociativity(associativity);
+      setAddressSize(addressSize);
+    }
+  }, [location.state]);
 
   // ข้อมูลตัวอย่างจาก sample_Random Access.csv
   const sampleRandomAccessData = [
@@ -410,5 +438,4 @@ const CacheSimulation = () => {
     </div>
   );
 };
-
 export default CacheSimulation;
