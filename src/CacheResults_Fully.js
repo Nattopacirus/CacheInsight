@@ -174,12 +174,19 @@ const CacheResults_Fully = () => {
         [cacheSize, blockSize, fileData, replacementPolicy, memorySize, addressSize]
     );
 
-    // Generate access pattern data
-    const accessPatternData = accessPattern.map((entry, index) => ({
-        index,
-        address: entry.address,
-        hit: entry.hit,
-    }));
+    // Generate bar chart data for Cache Access Results
+    const barChartData = {
+        labels: ["Hits", "Misses"],
+        datasets: [
+            {
+                label: "Cache Access Results",
+                data: [hits, misses],
+                backgroundColor: ["#36A2EB", "#FF6384"],
+                borderColor: ["#36A2EB", "#FF6384"],
+                borderWidth: 1,
+            },
+        ],
+    };
 
     // Generate miss rates for different block sizes
     const blockSizes = [16, 32, 64, 128, 256];
@@ -244,20 +251,33 @@ const CacheResults_Fully = () => {
     const sortedTags = Object.keys(tagFrequency).sort((a, b) => tagFrequency[b] - tagFrequency[a]);
     const topTags = sortedTags.slice(0, 10); // Top 10 tags
 
-    // Chart data and options
-    const barChartData = {
-        labels: ["Hits", "Misses"],
-        datasets: [
-            {
-                label: "Cache Access Results",
-                data: [hits, misses],
-                backgroundColor: ["#36A2EB", "#FF6384"],
-                borderColor: ["#36A2EB", "#FF6384"],
-                borderWidth: 1,
-            },
-        ],
+    // Aggregate access pattern data for better visualization
+    const aggregateData = (data, interval) => {
+        const aggregated = [];
+        for (let i = 0; i < data.length; i += interval) {
+            const chunk = data.slice(i, i + interval);
+            const average = chunk.reduce((sum, entry) => sum + (entry.hit ? 1 : 0), 0) / chunk.length;
+            aggregated.push({ index: i, hitRate: average });
+        }
+        return aggregated;
     };
 
+    const aggregatedData = aggregateData(accessPattern, 100); // Aggregate every 100 accesses
+
+    // Generate access pattern data for the chart
+    const accessPatternChartData = {
+        labels: aggregatedData.map(entry => entry.index),
+        datasets: [{
+            label: 'Access Pattern',
+            data: aggregatedData.map(entry => entry.hitRate),
+            borderColor: '#FF6384',
+            backgroundColor: '#FF6384',
+            fill: false,
+            tension: 0.2,
+        }]
+    };
+
+    // Generate line chart data for Miss Rate vs Block Size
     const lineChartData = {
         labels: blockSizes.map((size) => `${size} B`),
         datasets: [
@@ -272,6 +292,7 @@ const CacheResults_Fully = () => {
         ],
     };
 
+    // Generate line chart data for Hit Rate vs Cache Size
     const hitRateChartData = {
         labels: cacheSizes.map((size) => `${size} KB`),
         datasets: [
@@ -286,6 +307,7 @@ const CacheResults_Fully = () => {
         ],
     };
 
+    // Generate bar chart data for Miss Rate vs Replacement Policy
     const missRateByPolicyChartData = {
         labels: policies,
         datasets: [
@@ -299,20 +321,7 @@ const CacheResults_Fully = () => {
         ],
     };
 
-    const accessPatternChartData = {
-        labels: accessPatternData.map((_, i) => i + 1),
-        datasets: [
-            {
-                label: "Access Pattern",
-                data: accessPatternData.map((entry) => (entry.hit ? 1 : 0)),
-                borderColor: "#FF6384",
-                backgroundColor: "#FF6384",
-                fill: false,
-                tension: 0.2,
-            },
-        ],
-    };
-
+    // Generate bar chart data for Tag Distribution
     const tagDistributionChartData = {
         labels: topTags.map((tag) => `Tag ${tag}`),
         datasets: [
@@ -326,6 +335,7 @@ const CacheResults_Fully = () => {
         ],
     };
 
+    // Chart options
     const chartOptions = {
         responsive: true,
         plugins: {
