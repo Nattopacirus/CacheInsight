@@ -25,7 +25,7 @@ ChartJS.register(
 );
 
 // Function to simulate Fully Associative Cache
-const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacementPolicy) => {
+const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacementPolicy, memorySize, addressSize) => {
     const cacheSizeBytes = cacheSize * 1024;
     const blockSizeBytes = blockSize;
 
@@ -55,6 +55,9 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
     let hits = 0,
         misses = 0;
 
+    // เก็บสถานะของ Cache ในแต่ละขั้นตอนการเข้าถึง
+    const accessPattern = [];
+
     fileData.forEach((row) => {
         const addressHex = row["Address(Hex)"];
         if (!addressHex) return;
@@ -71,6 +74,7 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
                 accessOrder.splice(accessOrder.indexOf(tag), 1); // Remove from current position
                 accessOrder.push(tag); // Add to the end
             }
+            accessPattern.push({ address: addressHex, hit: true }); // บันทึก Hit
         } else {
             misses++;
             if (cache.size < numberOfBlocks) {
@@ -93,10 +97,11 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
                 cache.add(tag); // Add new tag
                 accessOrder.push(tag); // Add to the end
             }
+            accessPattern.push({ address: addressHex, hit: false }); // บันทึก Miss
         }
     });
 
-    return { hits, misses, cache }; // ส่งคืน cache กลับมาด้วย
+    return { hits, misses, cache, accessPattern }; // ส่งคืน accessPattern กลับมาด้วย
 };
 
 const CacheResults_Fully = () => {
@@ -163,11 +168,18 @@ const CacheResults_Fully = () => {
     }
 
     // Calculate cache results
-    const { hits, misses, cache } = useMemo(
+    const { hits, misses, cache, accessPattern } = useMemo(
         () =>
-            calculateFullyAssociativeCache(cacheSize, blockSize, fileData, replacementPolicy),
-        [cacheSize, blockSize, fileData, replacementPolicy]
+            calculateFullyAssociativeCache(cacheSize, blockSize, fileData, replacementPolicy, memorySize, addressSize),
+        [cacheSize, blockSize, fileData, replacementPolicy, memorySize, addressSize]
     );
+
+    // Generate access pattern data
+    const accessPatternData = accessPattern.map((entry, index) => ({
+        index,
+        address: entry.address,
+        hit: entry.hit,
+    }));
 
     // Generate miss rates for different block sizes
     const blockSizes = [16, 32, 64, 128, 256];
@@ -177,11 +189,13 @@ const CacheResults_Fully = () => {
                 cacheSize,
                 size,
                 fileData,
-                replacementPolicy
+                replacementPolicy,
+                memorySize,
+                addressSize
             );
             return (misses / (hits + misses)) * 100;
         });
-    }, [cacheSize, fileData, replacementPolicy]);
+    }, [cacheSize, fileData, replacementPolicy, memorySize, addressSize]);
 
     // Generate hit rates for different cache sizes
     const cacheSizes = [16, 32, 64, 128, 256]; // In KB
@@ -191,11 +205,13 @@ const CacheResults_Fully = () => {
                 size,
                 blockSize,
                 fileData,
-                replacementPolicy
+                replacementPolicy,
+                memorySize,
+                addressSize
             );
             return (hits / (hits + misses)) * 100;
         });
-    }, [blockSize, fileData, replacementPolicy]);
+    }, [blockSize, fileData, replacementPolicy, memorySize, addressSize]);
 
     // Generate miss rates for different replacement policies
     const policies = ["LRU", "FIFO", "Random"];
@@ -205,21 +221,13 @@ const CacheResults_Fully = () => {
                 cacheSize,
                 blockSize,
                 fileData,
-                policy
+                policy,
+                memorySize,
+                addressSize
             );
             return (misses / (hits + misses)) * 100;
         });
-    }, [cacheSize, blockSize, fileData]);
-
-    // Generate access pattern data
-    const accessPatternData = useMemo(() => {
-        return fileData.map((row, index) => {
-            const addressHex = row["Address(Hex)"];
-            const addressDec = parseInt(addressHex, 16);
-            const tag = addressDec >> Math.log2(blockSize);
-            return { index, address: addressHex, tag, hit: cache.has(tag) }; // ใช้ cache ที่ส่งคืนมาจากฟังก์ชัน
-        });
-    }, [fileData, blockSize, cache]); // เพิ่ม cache ใน dependency array
+    }, [cacheSize, blockSize, fileData, memorySize, addressSize]);
 
     // Generate tag frequency data
     const tagFrequency = useMemo(() => {
@@ -359,6 +367,9 @@ const CacheResults_Fully = () => {
                         <p className="text-lg">Cache Size: {cacheSize} KB</p>
                         <p className="text-lg">Block Size: {blockSize} B</p>
                         <p className="text-lg">Replacement Policy: {replacementPolicy}</p>
+                        <p className="text-lg">Memory Size: {memorySize} MB</p>
+                        <p className="text-lg">Mapping Technique: {mappingTechnique}</p>
+                        <p className="text-lg">Address Size: {addressSize} bits</p>
                     </div>
 
                     {/* Cache Access Results */}
