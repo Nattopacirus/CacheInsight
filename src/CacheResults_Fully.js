@@ -34,6 +34,11 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
         throw new Error("Block size must be a positive integer.");
     }
 
+    // Ensure block size is a power of 2
+    if ((blockSizeBytes & (blockSizeBytes - 1)) !== 0) {
+        throw new Error("Block size must be a power of 2.");
+    }
+
     // Validate cache size
     if (cacheSizeBytes <= 0 || !Number.isInteger(cacheSizeBytes)) {
         throw new Error("Cache size must be a positive integer.");
@@ -80,7 +85,9 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
                     evictTag = accessOrder.shift(); // Remove the first in
                 } else if (replacementPolicy === "Random") {
                     evictTag = accessOrder[Math.floor(Math.random() * accessOrder.length)];
-                    accessOrder.splice(accessOrder.indexOf(evictTag), 1); // Remove the random element
+                    if (accessOrder.includes(evictTag)) {
+                        accessOrder.splice(accessOrder.indexOf(evictTag), 1); // Remove the random element
+                    }
                 }
                 cache.delete(evictTag); // Remove from cache
                 cache.add(tag); // Add new tag
@@ -89,7 +96,7 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
         }
     });
 
-    return { hits, misses };
+    return { hits, misses, cache }; // ส่งคืน cache กลับมาด้วย
 };
 
 const CacheResults_Fully = () => {
@@ -141,8 +148,22 @@ const CacheResults_Fully = () => {
         );
     }
 
+    // Validate replacement policy
+    if (!["LRU", "FIFO", "Random"].includes(replacementPolicy)) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+                <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
+                    <h1 className="text-3xl font-semibold text-blue-700 mb-2">Error</h1>
+                    <p className="text-md text-gray-500">
+                        Invalid replacement policy. Please choose LRU, FIFO, or Random.
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     // Calculate cache results
-    const { hits, misses } = useMemo(
+    const { hits, misses, cache } = useMemo(
         () =>
             calculateFullyAssociativeCache(cacheSize, blockSize, fileData, replacementPolicy),
         [cacheSize, blockSize, fileData, replacementPolicy]
@@ -150,17 +171,72 @@ const CacheResults_Fully = () => {
 
     // Generate miss rates for different block sizes
     const blockSizes = [16, 32, 64, 128, 256];
-    const missRates = blockSizes.map((size) => {
-        const { misses, hits } = calculateFullyAssociativeCache(
-            cacheSize,
-            size,
-            fileData,
-            replacementPolicy
-        );
-        return (misses / (hits + misses)) * 100;
-    });
+    const missRates = useMemo(() => {
+        return blockSizes.map((size) => {
+            const { misses, hits } = calculateFullyAssociativeCache(
+                cacheSize,
+                size,
+                fileData,
+                replacementPolicy
+            );
+            return (misses / (hits + misses)) * 100;
+        });
+    }, [cacheSize, fileData, replacementPolicy]);
 
-    // Bar chart data for hits and misses
+    // Generate hit rates for different cache sizes
+    const cacheSizes = [16, 32, 64, 128, 256]; // In KB
+    const hitRates = useMemo(() => {
+        return cacheSizes.map((size) => {
+            const { hits, misses } = calculateFullyAssociativeCache(
+                size,
+                blockSize,
+                fileData,
+                replacementPolicy
+            );
+            return (hits / (hits + misses)) * 100;
+        });
+    }, [blockSize, fileData, replacementPolicy]);
+
+    // Generate miss rates for different replacement policies
+    const policies = ["LRU", "FIFO", "Random"];
+    const missRatesByPolicy = useMemo(() => {
+        return policies.map((policy) => {
+            const { misses, hits } = calculateFullyAssociativeCache(
+                cacheSize,
+                blockSize,
+                fileData,
+                policy
+            );
+            return (misses / (hits + misses)) * 100;
+        });
+    }, [cacheSize, blockSize, fileData]);
+
+    // Generate access pattern data
+    const accessPatternData = useMemo(() => {
+        return fileData.map((row, index) => {
+            const addressHex = row["Address(Hex)"];
+            const addressDec = parseInt(addressHex, 16);
+            const tag = addressDec >> Math.log2(blockSize);
+            return { index, address: addressHex, tag, hit: cache.has(tag) }; // ใช้ cache ที่ส่งคืนมาจากฟังก์ชัน
+        });
+    }, [fileData, blockSize, cache]); // เพิ่ม cache ใน dependency array
+
+    // Generate tag frequency data
+    const tagFrequency = useMemo(() => {
+        const frequency = {};
+        fileData.forEach((row) => {
+            const addressHex = row["Address(Hex)"];
+            const addressDec = parseInt(addressHex, 16);
+            const tag = addressDec >> Math.log2(blockSize);
+            frequency[tag] = (frequency[tag] || 0) + 1;
+        });
+        return frequency;
+    }, [fileData, blockSize]);
+
+    const sortedTags = Object.keys(tagFrequency).sort((a, b) => tagFrequency[b] - tagFrequency[a]);
+    const topTags = sortedTags.slice(0, 10); // Top 10 tags
+
+    // Chart data and options
     const barChartData = {
         labels: ["Hits", "Misses"],
         datasets: [
@@ -174,7 +250,6 @@ const CacheResults_Fully = () => {
         ],
     };
 
-    // Line chart data for miss rate vs block size
     const lineChartData = {
         labels: blockSizes.map((size) => `${size} B`),
         datasets: [
@@ -189,7 +264,60 @@ const CacheResults_Fully = () => {
         ],
     };
 
-    // Chart options
+    const hitRateChartData = {
+        labels: cacheSizes.map((size) => `${size} KB`),
+        datasets: [
+            {
+                label: "Hit Rate (%)",
+                data: hitRates,
+                fill: false,
+                borderColor: "#36A2EB",
+                backgroundColor: "#36A2EB",
+                tension: 0.2,
+            },
+        ],
+    };
+
+    const missRateByPolicyChartData = {
+        labels: policies,
+        datasets: [
+            {
+                label: "Miss Rate (%)",
+                data: missRatesByPolicy,
+                backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+                borderColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+                borderWidth: 1,
+            },
+        ],
+    };
+
+    const accessPatternChartData = {
+        labels: accessPatternData.map((_, i) => i + 1),
+        datasets: [
+            {
+                label: "Access Pattern",
+                data: accessPatternData.map((entry) => (entry.hit ? 1 : 0)),
+                borderColor: "#FF6384",
+                backgroundColor: "#FF6384",
+                fill: false,
+                tension: 0.2,
+            },
+        ],
+    };
+
+    const tagDistributionChartData = {
+        labels: topTags.map((tag) => `Tag ${tag}`),
+        datasets: [
+            {
+                label: "Frequency",
+                data: topTags.map((tag) => tagFrequency[tag]),
+                backgroundColor: "#36A2EB",
+                borderColor: "#36A2EB",
+                borderWidth: 1,
+            },
+        ],
+    };
+
     const chartOptions = {
         responsive: true,
         plugins: {
@@ -200,7 +328,7 @@ const CacheResults_Fully = () => {
 
     return (
         <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
+            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-6xl border border-gray-200">
                 <div className="text-center mb-6">
                     <h1 className="text-3xl font-semibold text-blue-700 mb-2">
                         Fully Associative Cache Results
@@ -210,7 +338,8 @@ const CacheResults_Fully = () => {
                     </p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Simulation Results */}
                     <div>
                         <h2 className="text-xl font-semibold text-blue-700 mb-2">
                             Simulation Results:
@@ -222,6 +351,7 @@ const CacheResults_Fully = () => {
                         </p>
                     </div>
 
+                    {/* Cache Parameters */}
                     <div>
                         <h2 className="text-xl font-semibold text-blue-700 mb-2">
                             Cache Parameters:
@@ -231,6 +361,7 @@ const CacheResults_Fully = () => {
                         <p className="text-lg">Replacement Policy: {replacementPolicy}</p>
                     </div>
 
+                    {/* Cache Access Results */}
                     <div>
                         <h2 className="text-xl font-semibold text-blue-700 mb-2">
                             Cache Access Results:
@@ -238,6 +369,7 @@ const CacheResults_Fully = () => {
                         <Bar data={barChartData} options={chartOptions} />
                     </div>
 
+                    {/* Miss Rate vs Block Size */}
                     <div>
                         <h2 className="text-xl font-semibold text-blue-700 mb-2">
                             Miss Rate vs Block Size:
@@ -245,9 +377,41 @@ const CacheResults_Fully = () => {
                         <Line data={lineChartData} options={chartOptions} />
                     </div>
 
+                    {/* Hit Rate vs Cache Size */}
+                    <div>
+                        <h2 className="text-xl font-semibold text-blue-700 mb-2">
+                            Hit Rate vs Cache Size:
+                        </h2>
+                        <Line data={hitRateChartData} options={chartOptions} />
+                    </div>
+
+                    {/* Miss Rate vs Replacement Policy */}
+                    <div>
+                        <h2 className="text-xl font-semibold text-blue-700 mb-2">
+                            Miss Rate vs Replacement Policy:
+                        </h2>
+                        <Bar data={missRateByPolicyChartData} options={chartOptions} />
+                    </div>
+
+                    {/* Access Pattern */}
+                    <div>
+                        <h2 className="text-xl font-semibold text-blue-700 mb-2">
+                            Access Pattern:
+                        </h2>
+                        <Line data={accessPatternChartData} options={chartOptions} />
+                    </div>
+
+                    {/* Tag Distribution */}
+                    <div>
+                        <h2 className="text-xl font-semibold text-blue-700 mb-2">
+                            Top 10 Tags by Frequency:
+                        </h2>
+                        <Bar data={tagDistributionChartData} options={chartOptions} />
+                    </div>
+
                     {/* CSV Data Preview */}
                     {fileData && (
-                        <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+                        <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm col-span-2">
                             <h2 className="text-lg font-semibold text-blue-700 mb-2">
                                 Data Preview:
                             </h2>
@@ -283,7 +447,7 @@ const CacheResults_Fully = () => {
                 <div className="mt-6 text-center">
                     <button
                         className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-                        onClick={handleBack} // ใช้ handleBack แทน navigate(-1)
+                        onClick={handleBack}
                     >
                         ← Back
                     </button>
