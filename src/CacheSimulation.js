@@ -1,22 +1,21 @@
-// CacheSimulation.js
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; // เพิ่ม useLocation ตรงนี้
+import { useNavigate, useLocation } from "react-router-dom";
 import Papa from "papaparse";
 
 const CacheSimulation = () => {
-  const [memorySize, setMemorySize] = useState(64);
-  const [cacheSize, setCacheSize] = useState(1);
-  const [blockSize, setBlockSize] = useState(16);
+  const [memorySize, setMemorySize] = useState(64); // ในหน่วย MB
+  const [cacheSize, setCacheSize] = useState(1); // ในหน่วย KB
+  const [blockSize, setBlockSize] = useState(16); // ในหน่วย B
   const [replacementPolicy, setReplacementPolicy] = useState("LRU");
   const [fileData, setFileData] = useState(null);
   const [fileName, setFileName] = useState("");
   const [mappingTechnique, setMappingTechnique] = useState("directMapped");
-  const [associativity, setAssociativity] = useState(2);
+  const [associativity, setAssociativity] = useState(2); // สำหรับ Set-Associative Cache
+  const [addressSize, setAddressSize] = useState(32); // ในหน่วย bits
   const [error, setError] = useState("");
-  const [addressSize, setAddressSize] = useState(32);
 
   const navigate = useNavigate();
-  const location = useLocation(); // ใช้ useLocation ที่นี่
+  const location = useLocation();
 
   // รับค่าสถานะที่ส่งกลับมาและอัปเดต state
   useEffect(() => {
@@ -66,7 +65,6 @@ const CacheSimulation = () => {
         skipEmptyLines: true,
         dynamicTyping: true,
         complete: (parsedResult) => {
-          // Check if there were parsing errors
           if (parsedResult.errors.length > 0) {
             setError("Error parsing CSV file.");
             console.error("Parsing Errors:", parsedResult.errors);
@@ -78,34 +76,18 @@ const CacheSimulation = () => {
             return;
           }
 
-          console.log(parsedResult.data);  // Check parsed data
           setFileData(parsedResult.data);
           setFileName(file.name);
           setError("");
         },
-        // Try other options for better compatibility with certain CSV formats
-        delimiter: ",", // Can be changed to ';' or another delimiter if necessary
+        delimiter: ",",
       });
     };
 
     reader.readAsText(file, "UTF-8");
   };
 
-
-  const handleUseSampleData = (sampleData, sampleName) => {
-    // แปลงข้อมูลตัวอย่างให้เป็นรูปแบบที่โปรแกรมคาดหวัง
-    const formattedData = sampleData.map((address) => ({
-      "Address(Hex)": address,
-    }));
-
-    // อัปเดต state ด้วยข้อมูลตัวอย่าง
-    setFileData(formattedData);
-    setFileName(sampleName);
-    setError(""); // ล้างข้อผิดพลาดเมื่อสำเร็จ
-  };
-
   const startSimulation = () => {
-    // ตรวจสอบค่าที่ไม่ถูกต้อง
     if (!fileData || fileData.length === 0) {
       setError("Please use sample data or upload a valid CSV file before starting the simulation.");
       return;
@@ -126,25 +108,19 @@ const CacheSimulation = () => {
       return;
     }
 
-    // ตรวจสอบ Associativity สำหรับ Set-Associative Cache
     if (mappingTechnique === "setAssociative" && (isNaN(associativity) || associativity <= 0)) {
       setError("Associativity must be greater than 0 for Set-Associative Cache.");
       return;
     }
 
-    // แปลง Block Size จาก B เป็น KB
     const blockSizeKB = blockSize / 1024;
-
-    // ตรวจสอบว่า Cache Size ต้องมากกว่าหรือเท่ากับ Block Size (ในหน่วยเดียวกัน)
     if (cacheSize < blockSizeKB) {
       setError("Cache Size must be greater than or equal to Block Size.");
       return;
     }
 
-    // ล้างข้อผิดพลาดหากทุกอย่างถูกต้อง
     setError("");
 
-    // นำทางไปยังหน้าผลลัพธ์ที่ถูกต้อง
     const state = {
       memorySize,
       cacheSize,
@@ -154,7 +130,7 @@ const CacheSimulation = () => {
       mappingTechnique,
       fileName,
       associativity,
-      addressSize, // เพิ่ม addressSize ใน state
+      addressSize,
     };
 
     switch (mappingTechnique) {
@@ -182,7 +158,6 @@ const CacheSimulation = () => {
           </p>
         </div>
 
-        {/* แสดงข้อผิดพลาด */}
         {error && (
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
             {error}
@@ -190,7 +165,6 @@ const CacheSimulation = () => {
         )}
 
         <div className="space-y-6">
-          {/* Memory Size Input (เหมือนเดิม) */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">Memory Size (MB):</label>
             <input
@@ -204,7 +178,6 @@ const CacheSimulation = () => {
             <p className="text-sm text-gray-500 mt-1">Memory Size must be between 0 and 1024 MB.</p>
           </div>
 
-          {/* Cache Size Input (เหมือนเดิม) */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">Cache Size (KB):</label>
             <select
@@ -212,6 +185,7 @@ const CacheSimulation = () => {
               value={cacheSize}
               onChange={(e) => setCacheSize(parseInt(e.target.value))}
             >
+              <option value={1}>1 KB</option>
               <option value={2}>2 KB</option>
               <option value={4}>4 KB</option>
               <option value={8}>8 KB</option>
@@ -243,7 +217,6 @@ const CacheSimulation = () => {
             <p className="text-sm text-gray-500 mt-1">Block Size must be between 2 and 256 B.</p>
           </div>
 
-          {/* Cache Mapping Technique Dropdown (เหมือนเดิม) */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">Cache Mapping Technique:</label>
             <select
@@ -290,8 +263,6 @@ const CacheSimulation = () => {
             </div>
           )}
 
-
-          {/* Replacement Policy Dropdown (เหมือนเดิม) */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">Replacement Policy:</label>
             <select
@@ -312,7 +283,6 @@ const CacheSimulation = () => {
             )}
           </div>
 
-          {/* ปุ่มอัปโหลดไฟล์ */}
           <div>
             <label className="block font-semibold text-gray-700 mb-2">Upload CSV File:</label>
             <label className="w-full p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center justify-center">
@@ -327,7 +297,6 @@ const CacheSimulation = () => {
             <p className="text-sm text-gray-500 mt-1">Upload a CSV file containing memory access data.</p>
           </div>
 
-          {/* CSV Data Preview (เหมือนเดิม) */}
           {fileData && (
             <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
               <h2 className="text-lg font-semibold text-blue-700 mb-2">Data Preview:</h2>
@@ -347,11 +316,13 @@ const CacheSimulation = () => {
                   </tbody>
                 </table>
               </div>
-              <p className="text-sm text-gray-500 mt-2">{fileName ? fileName : "No data loaded"}</p>
+              {/* เพิ่มบรรทัดนี้เพื่อแสดงจำนวนแถว */}
+              <p className="text-sm text-gray-500 mt-2">
+                {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
+              </p>
             </div>
           )}
 
-          {/* Start Simulation Button (เหมือนเดิม) */}
           <div className="mt-6">
             <button
               onClick={startSimulation}
@@ -365,4 +336,5 @@ const CacheSimulation = () => {
     </div>
   );
 };
+
 export default CacheSimulation;
