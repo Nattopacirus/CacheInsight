@@ -42,6 +42,7 @@ const calculateDirectMappedCache = (cacheSize, blockSize, fileData, addressSize)
 
   const cache = new Array(numberOfBlocks).fill(null);
   const conflictCounts = new Array(numberOfBlocks).fill(0);
+  const accessPattern = [];
   let hits = 0, misses = 0, invalidRows = 0;
 
   fileData.forEach((row, rowIndex) => {
@@ -49,12 +50,14 @@ const calculateDirectMappedCache = (cacheSize, blockSize, fileData, addressSize)
     if (!addressHex) {
       invalidRows++;
       console.warn(`Row ${rowIndex}: Missing Address(Hex)`);
+      accessPattern.push({ address: "N/A", hit: false });
       return;
     }
     const addressDec = parseInt(addressHex, 16);
     if (isNaN(addressDec)) {
       invalidRows++;
       console.warn(`Row ${rowIndex}: Invalid Address(Hex) - ${addressHex}`);
+      accessPattern.push({ address: addressHex, hit: false });
       return;
     }
 
@@ -63,16 +66,18 @@ const calculateDirectMappedCache = (cacheSize, blockSize, fileData, addressSize)
 
     if (cache[index] === tag) {
       hits++;
+      accessPattern.push({ address: addressHex, hit: true });
     } else {
       misses++;
       if (cache[index] !== null) {
         conflictCounts[index]++;
       }
       cache[index] = tag;
+      accessPattern.push({ address: addressHex, hit: false });
     }
   });
 
-  return { hits, misses, invalidRows, conflictCounts };
+  return { hits, misses, invalidRows, conflictCounts, accessPattern };
 };
 
 const CacheResults_Direct = () => {
@@ -118,7 +123,7 @@ const CacheResults_Direct = () => {
     );
   }
 
-  const { hits, misses, invalidRows, conflictCounts } = useMemo(() =>
+  const { hits, misses, invalidRows, conflictCounts, accessPattern } = useMemo(() =>
     calculateDirectMappedCache(cacheSize, blockSize, fileData, addressSize),
     [cacheSize, blockSize, fileData, addressSize]
   );
@@ -207,6 +212,47 @@ const CacheResults_Direct = () => {
         backgroundColor: "#36A2EB",
         borderColor: "#36A2EB",
         borderWidth: 1,
+      },
+    ],
+  };
+
+  // Line Chart: Access Pattern (Hit Rate และ Miss Rate)
+  const interval = Math.max(1, Math.floor(fileData.length / 10)); // แบ่งเป็น 10 ช่วง
+  const aggregatedData = useMemo(() => {
+    const aggregated = [];
+    for (let i = 0; i < accessPattern.length; i += interval) {
+      const chunk = accessPattern.slice(i, i + interval);
+      const hitCount = chunk.filter((entry) => entry.hit).length;
+      const missCount = chunk.filter((entry) => !entry.hit).length;
+      const total = hitCount + missCount;
+      aggregated.push({
+        start: i + 1,
+        end: Math.min(i + interval, accessPattern.length),
+        hitRate: total > 0 ? (hitCount / total) * 100 : 0,
+        missRate: total > 0 ? (missCount / total) * 100 : 0,
+      });
+    }
+    return aggregated;
+  }, [accessPattern]);
+
+  const accessPatternChartData = {
+    labels: aggregatedData.map((entry) => `Access ${entry.start}-${entry.end}`),
+    datasets: [
+      {
+        label: "Hit Rate (%)",
+        data: aggregatedData.map((entry) => entry.hitRate),
+        borderColor: "#36A2EB",
+        backgroundColor: "#36A2EB",
+        fill: false,
+        tension: 0.2,
+      },
+      {
+        label: "Miss Rate (%)",
+        data: aggregatedData.map((entry) => entry.missRate),
+        borderColor: "#FF6384",
+        backgroundColor: "#FF6384",
+        fill: false,
+        tension: 0.2,
       },
     ],
   };
@@ -330,6 +376,24 @@ const CacheResults_Direct = () => {
           </div>
         </div>
 
+        {/* Access Pattern - 1 Grid */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-blue-700 mb-2">Access Pattern:</h2>
+          <div className="h-80">
+            <Line
+              data={accessPatternChartData}
+              options={{
+                ...chartOptions,
+                scales: {
+                  y: { title: { text: "Rate (%)" }, min: 0, max: 100 },
+                  x: { title: { text: "Access Interval" } },
+                },
+              }}
+            />
+          </div>
+          <p className="text-sm text-gray-500 mt-2">แสดงอัตราการ Hit และ Miss (%) ในแต่ละช่วงการเข้าถึง</p>
+        </div>
+
         {/* Data Preview - 1 Grid */}
         {fileData && (
           <div className="mt-6 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
@@ -362,7 +426,7 @@ const CacheResults_Direct = () => {
             className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
             onClick={handleBack}
           >
-            ← Back
+            ← Back to Simulation
           </button>
         </div>
       </div>
