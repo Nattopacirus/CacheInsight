@@ -17,7 +17,7 @@ address_range = 0xFFFF  # ช่วง Address (0x0000 ถึง 0xFFFF)
 random_addresses = generate_random_addresses(num_addresses, address_range)
 
 # เขียนลงไฟล์ CSV
-with open('cache_insight\csv_test\100Krandom_access.csv', 'w', newline='') as file:
+with open('cache_insight\csv_test\_100K_random_access.csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(["Address(Hex)"])  # เขียน Header
     for address in random_addresses:
