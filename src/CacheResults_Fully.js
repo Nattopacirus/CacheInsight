@@ -286,7 +286,7 @@ const CacheResults_Fully = () => {
         index: i,
         hitRate: hitCount + missCount > 0 ? (hitCount / (hitCount + missCount)) * 100 : 0,
       });
-    });
+    };
     return aggregated;
   };
 
