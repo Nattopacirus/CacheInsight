@@ -381,25 +381,25 @@ const CacheResults_Fully = () => {
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Access Results:</h2>
             <Bar data={barChartData} options={chartOptions} />
-            <p className="text-sm text-gray-500 mt-2">แสดงจำนวน Hits (สีเขียว) และ Misses (สีแดง) ที่เกิดขึ้นระหว่างการจำลอง</p>
+            <p className="text-sm text-gray-500 mt-2">Show the number of Hits (green) and Misses (red) that occur during the simulation.</p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Block Size:</h2>
             <Line data={lineChartData} options={chartOptions} />
-            <p className="text-sm text-gray-500 mt-2">แสดงอัตราการ Miss (%) เมื่อ Block Size เปลี่ยนแปลง</p>
+            <p className="text-sm text-gray-500 mt-2">Show the Miss rate (%) when the Block Size changes.</p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Hit Rate vs Cache Size:</h2>
             <Line data={hitRateChartData} options={chartOptions} />
-            <p className="text-sm text-gray-500 mt-2">แสดงอัตราการ Hit (%) เมื่อ Cache Size เปลี่ยนแปลง</p>
+            <p className="text-sm text-gray-500 mt-2">Show the Hit rate (%) when the Cache Size changes.</p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Replacement Policy:</h2>
             <Bar data={missRateByPolicyChartData} options={chartOptions} />
-            <p className="text-sm text-gray-500 mt-2">แสดงอัตราการ Miss (%) สำหรับแต่ละ Replacement Policy (LRU, FIFO, Random)</p>
+            <p className="text-sm text-gray-500 mt-2">Show the Miss rate (%) for each Replacement Policy (LRU, FIFO, Random).</p>
           </div>
 
           <div>
@@ -407,15 +407,15 @@ const CacheResults_Fully = () => {
             <Line data={accessPatternChartData} options={chartOptions} />
             <p className="text-sm text-gray-500 mt-2">
               {isDataSmall
-                ? "แสดง Hit (1) และ Miss (0) สำหรับการเข้าถึงข้อมูลแต่ละครั้ง"
-                : "แสดงอัตราการ Hit (%) ในช่วงการเข้าถึงข้อมูล"}
+                ? "Show Hit (1) and Miss (0) for each data access."
+                : "Show the Hit rate (%) over the data access period."}
             </p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Top 10 Tags by Frequency:</h2>
             <Bar data={tagDistributionChartData} options={chartOptions} />
-            <p className="text-sm text-gray-500 mt-2">แสดง Tag ที่ถูกเข้าถึงบ่อยที่สุด 10 อันดับแรก</p>
+            <p className="text-sm text-gray-500 mt-2">Show the top 10 most frequently accessed Tags.</p>
           </div>
 
           {fileData && (
