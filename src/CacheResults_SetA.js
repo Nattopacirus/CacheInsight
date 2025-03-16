@@ -1,31 +1,25 @@
 import React, { useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Line } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
+  BarElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend);
 
-// Function to simulate Direct Mapped Cache
+// Function to simulate Direct Mapped Cache (Associativity = 1)
 const calculateDirectMappedCache = (cacheSize, blockSize, fileData, addressSize) => {
   const cacheSizeBytes = cacheSize * 1024;
   if (blockSize <= 0 || !Number.isInteger(blockSize)) throw new Error("Block size must be a positive integer.");
+  if ((blockSize & (blockSize - 1)) !== 0) throw new Error("Block size must be a power of 2.");
   if (cacheSizeBytes <= 0 || !Number.isInteger(cacheSizeBytes)) throw new Error("Cache size must be a positive integer.");
   if (cacheSizeBytes % blockSize !== 0) throw new Error("Cache size must be a multiple of block size.");
 
@@ -34,12 +28,10 @@ const calculateDirectMappedCache = (cacheSize, blockSize, fileData, addressSize)
   const indexBits = Math.log2(numberOfBlocks);
   const tagBits = addressSize - offsetBits - indexBits;
 
-  if (tagBits <= 0) throw new Error("Invalid address size or cache configuration.");
+  if (tagBits < 0) throw new Error("Invalid cache configuration: tagBits cannot be negative.");
 
   const cache = new Array(numberOfBlocks).fill(null);
-  let hits = 0,
-    misses = 0;
-  let invalidRows = 0;
+  let hits = 0, misses = 0, invalidRows = 0;
 
   fileData.forEach((row, rowIndex) => {
     const addressHex = row["Address(Hex)"];
@@ -66,11 +58,7 @@ const calculateDirectMappedCache = (cacheSize, blockSize, fileData, addressSize)
     }
   });
 
-  if (invalidRows > 0) {
-    console.warn(`Found ${invalidRows} invalid rows in fileData`);
-  }
-
-  return { hits, misses };
+  return { hits, misses, invalidRows };
 };
 
 // Function to simulate Set-Associative Cache
@@ -88,13 +76,11 @@ const calculateSetAssociativeCache = (cacheSize, blockSize, fileData, associativ
   const indexBits = Math.log2(numberOfSets);
   const tagBits = addressSize - offsetBits - indexBits;
 
-  if (tagBits <= 0) throw new Error("Invalid address size or cache configuration.");
+  if (tagBits < 0) throw new Error("Invalid cache configuration: tagBits cannot be negative.");
 
   const cache = Array.from({ length: numberOfSets }, () => []);
   const accessOrder = Array.from({ length: numberOfSets }, () => []);
-  let hits = 0,
-    misses = 0;
-  let invalidRows = 0;
+  let hits = 0, misses = 0, invalidRows = 0;
 
   fileData.forEach((row, rowIndex) => {
     const addressHex = row["Address(Hex)"];
@@ -127,15 +113,12 @@ const calculateSetAssociativeCache = (cacheSize, blockSize, fileData, associativ
         accessOrder[setIndex].push(tag);
       } else {
         let evictTag;
-        if (replacementPolicy === "LRU") {
-          evictTag = accessOrder[setIndex].shift();
-        } else if (replacementPolicy === "FIFO") {
+        if (replacementPolicy === "LRU" || replacementPolicy === "FIFO") {
           evictTag = accessOrder[setIndex].shift();
         } else if (replacementPolicy === "Random") {
+          if (accessOrder[setIndex].length === 0) return;
           evictTag = accessOrder[setIndex][Math.floor(Math.random() * accessOrder[setIndex].length)];
-          if (accessOrder[setIndex].includes(evictTag)) {
-            accessOrder[setIndex].splice(accessOrder[setIndex].indexOf(evictTag), 1);
-          }
+          accessOrder[setIndex].splice(accessOrder[setIndex].indexOf(evictTag), 1);
         }
         cache[setIndex].splice(cache[setIndex].indexOf(evictTag), 1);
         cache[setIndex].push(tag);
@@ -144,11 +127,7 @@ const calculateSetAssociativeCache = (cacheSize, blockSize, fileData, associativ
     }
   });
 
-  if (invalidRows > 0) {
-    console.warn(`Found ${invalidRows} invalid rows in fileData`);
-  }
-
-  return { hits, misses };
+  return { hits, misses, cache, accessOrder, invalidRows };
 };
 
 // Function to simulate Fully Associative Cache
@@ -164,9 +143,7 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
   const numberOfBlocks = cacheSizeBytes / blockSizeBytes;
   const cache = new Set();
   const accessOrder = [];
-  let hits = 0,
-    misses = 0;
-  let invalidRows = 0;
+  let hits = 0, misses = 0, invalidRows = 0;
 
   fileData.forEach((row, rowIndex) => {
     const addressHex = row["Address(Hex)"];
@@ -197,15 +174,12 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
         accessOrder.push(tag);
       } else {
         let evictTag;
-        if (replacementPolicy === "LRU") {
-          evictTag = accessOrder.shift();
-        } else if (replacementPolicy === "FIFO") {
+        if (replacementPolicy === "LRU" || replacementPolicy === "FIFO") {
           evictTag = accessOrder.shift();
         } else if (replacementPolicy === "Random") {
+          if (accessOrder.length === 0) return;
           evictTag = accessOrder[Math.floor(Math.random() * accessOrder.length)];
-          if (accessOrder.includes(evictTag)) {
-            accessOrder.splice(accessOrder.indexOf(evictTag), 1);
-          }
+          accessOrder.splice(accessOrder.indexOf(evictTag), 1);
         }
         cache.delete(evictTag);
         cache.add(tag);
@@ -214,27 +188,14 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
     }
   });
 
-  if (invalidRows > 0) {
-    console.warn(`Found ${invalidRows} invalid rows in fileData`);
-  }
-
-  return { hits, misses };
+  return { hits, misses, invalidRows };
 };
 
 const CacheResults_SetA = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    cacheSize,
-    blockSize,
-    fileData,
-    fileName,
-    replacementPolicy,
-    memorySize,
-    mappingTechnique,
-    associativity,
-    addressSize,
-  } = location.state || {};
+  const { cacheSize, blockSize, fileData, fileName, replacementPolicy, memorySize, mappingTechnique, associativity, addressSize } =
+    location.state || {};
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -256,21 +217,12 @@ const CacheResults_SetA = () => {
     });
   };
 
-  if (
-    !location.state ||
-    isNaN(cacheSize) ||
-    isNaN(blockSize) ||
-    blockSize <= 0 ||
-    cacheSize <= 0 ||
-    !fileData?.length
-  ) {
+  if (!location.state || isNaN(cacheSize) || isNaN(blockSize) || blockSize <= 0 || cacheSize <= 0 || !fileData?.length) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
         <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
           <h1 className="text-3xl font-semibold text-blue-700 mb-2">Error</h1>
-          <p className="text-md text-gray-500">
-            Invalid simulation data. Please ensure cache size and block size are valid.
-          </p>
+          <p className="text-md text-gray-500">Invalid simulation data. Please ensure cache size and block size are valid.</p>
         </div>
       </div>
     );
@@ -281,9 +233,7 @@ const CacheResults_SetA = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
         <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
           <h1 className="text-3xl font-semibold text-blue-700 mb-2">Error</h1>
-          <p className="text-md text-gray-500">
-            Invalid replacement policy. Please choose LRU, FIFO, or Random.
-          </p>
+          <p className="text-md text-gray-500">Invalid replacement policy. Please choose LRU, FIFO, or Random.</p>
         </div>
       </div>
     );
@@ -295,31 +245,202 @@ const CacheResults_SetA = () => {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
         <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
           <h1 className="text-3xl font-semibold text-blue-700 mb-2">Error</h1>
-          <p className="text-md text-gray-500">
-            Invalid associativity. Please choose 1-way, 2-way, 4-way, 8-way, or 16-way.
-          </p>
+          <p className="text-md text-gray-500">Invalid associativity. Please choose 1-way, 2-way, 4-way, 8-way, or 16-way.</p>
         </div>
       </div>
     );
   }
 
-  // Calculate simulation results based on mapping technique
-  const simulationResults = useMemo(() => {
-    if (mappingTechnique === "direct") {
-      return calculateDirectMappedCache(cacheSize, blockSize, fileData, addressSize);
-    } else if (mappingTechnique === "fullyAssociative") {
-      return calculateFullyAssociativeCache(cacheSize, blockSize, fileData, replacementPolicy, addressSize);
-    } else {
-      return calculateSetAssociativeCache(cacheSize, blockSize, fileData, associativity, replacementPolicy, addressSize);
-    }
-  }, [cacheSize, blockSize, fileData, replacementPolicy, addressSize, mappingTechnique, associativity]);
+  const { hits, misses, cache, invalidRows } = useMemo(() =>
+    calculateSetAssociativeCache(cacheSize, blockSize, fileData, associativity, replacementPolicy, addressSize),
+    [cacheSize, blockSize, fileData, associativity, replacementPolicy, addressSize]
+  );
 
-  const { hits, misses } = simulationResults;
   const hitRate = ((hits / (hits + misses)) * 100).toFixed(2);
 
-  // Format associativity display
-  const associativityDisplay = mappingTechnique === "fullyAssociative" ? "Fully Associative" : `${associativity}-way`;
+  const barChartData = {
+    labels: ["Hits", "Misses"],
+    datasets: [
+      {
+        label: "Cache Access Results",
+        data: [hits, misses],
+        backgroundColor: ["#4CAF50", "#F44336"],
+        borderColor: ["#4CAF50", "#F44336"],
+        borderWidth: 1,
+      },
+    ],
+  };
 
+  const blockSizes = [16, 32, 64, 128, 256];
+  const missRates = useMemo(() => {
+    return blockSizes.map((size) => {
+      const { misses, hits } = calculateSetAssociativeCache(
+        cacheSize,
+        size,
+        fileData,
+        associativity,
+        replacementPolicy,
+        addressSize
+      );
+      return (misses / (hits + misses)) * 100;
+    });
+  }, [cacheSize, fileData, associativity, replacementPolicy, addressSize]);
+
+  const lineChartData = {
+    labels: blockSizes.map((size) => `${size} B`),
+    datasets: [
+      {
+        label: "Miss Rate (%)",
+        data: missRates,
+        fill: false,
+        borderColor: "#FF6384",
+        backgroundColor: "#FF6384",
+        tension: 0.2,
+      },
+    ],
+  };
+
+  const cacheSizes = [16, 32, 64, 128, 256];
+  const hitRates = useMemo(() => {
+    return cacheSizes.map((size) => {
+      const { hits, misses } = calculateSetAssociativeCache(
+        size,
+        blockSize,
+        fileData,
+        associativity,
+        replacementPolicy,
+        addressSize
+      );
+      return (hits / (hits + misses)) * 100;
+    });
+  }, [blockSize, fileData, associativity, replacementPolicy, addressSize]);
+
+  const hitRateChartData = {
+    labels: cacheSizes.map((size) => `${size} KB`),
+    datasets: [
+      {
+        label: "Hit Rate (%)",
+        data: hitRates,
+        fill: false,
+        borderColor: "#36A2EB",
+        backgroundColor: "#36A2EB",
+        tension: 0.2,
+      },
+    ],
+  };
+
+  const policies = ["LRU", "FIFO", "Random"];
+  const missRatesByPolicy = useMemo(() => {
+    return policies.map((policy) => {
+      const { misses, hits } = calculateSetAssociativeCache(
+        cacheSize,
+        blockSize,
+        fileData,
+        associativity,
+        policy,
+        addressSize
+      );
+      return (misses / (hits + misses)) * 100;
+    });
+  }, [cacheSize, blockSize, fileData, associativity, addressSize]);
+
+  const missRateByPolicyChartData = {
+    labels: policies,
+    datasets: [
+      {
+        label: "Miss Rate (%)",
+        data: missRatesByPolicy,
+        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+        borderColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const tagFrequency = useMemo(() => {
+    const frequency = {};
+    fileData.forEach((row) => {
+      const addressHex = row["Address(Hex)"];
+      const addressDec = parseInt(addressHex, 16);
+      if (isNaN(addressDec)) return;
+      const tag = addressDec >> Math.log2(blockSize);
+      frequency[tag] = (frequency[tag] || 0) + 1;
+    });
+    return frequency;
+  }, [fileData, blockSize]);
+
+  const sortedTags = Object.keys(tagFrequency).sort((a, b) => tagFrequency[b] - tagFrequency[a]);
+  const topTags = sortedTags.slice(0, 10);
+
+  const tagDistributionChartData = {
+    labels: topTags.map((tag) => `Tag ${tag}`),
+    datasets: [
+      {
+        label: "Frequency",
+        data: topTags.map((tag) => tagFrequency[tag]),
+        backgroundColor: "#36A2EB",
+        borderColor: "#36A2EB",
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const aggregateData = (data, interval) => {
+    const aggregated = [];
+    for (let i = 0; i < data.length; i += interval) {
+      const chunk = data.slice(i, i + interval);
+      const hitCount = chunk.filter((entry) => entry.hit).length;
+      const missCount = chunk.filter((entry) => !entry.hit).length;
+      aggregated.push({
+        index: i,
+        hitRate: hitCount + missCount > 0 ? (hitCount / (hitCount + missCount)) * 100 : 0,
+        hitCount,
+        missCount,
+      });
+    }
+    return aggregated;
+  };
+
+  const offsetBits = Math.log2(blockSize);
+  const indexBits = Math.log2(cache.length);
+  const accessPattern = fileData.map((row) => {
+    const addressHex = row["Address(Hex)"];
+    const addressDec = parseInt(addressHex, 16);
+    if (isNaN(addressDec)) return { address: addressHex, hit: false };
+    const tag = addressDec >> (offsetBits + indexBits);
+    const setIndex = (addressDec >> offsetBits) & ((1 << indexBits) - 1);
+    const hit = cache[setIndex] ? cache[setIndex].includes(tag) : false;
+    return { address: addressHex, hit };
+  });
+
+  const interval = Math.max(1, Math.floor(fileData.length / 10));
+  const aggregatedData = aggregateData(accessPattern, interval);
+
+  const accessPatternChartData = {
+    labels: aggregatedData.map((entry) => `Access ${entry.index + 1}-${entry.index + interval}`),
+    datasets: [
+      {
+        label: "Hit Rate (%)",
+        data: aggregatedData.map((entry) => entry.hitRate),
+        borderColor: "#36A2EB",
+        backgroundColor: "#36A2EB",
+        fill: false,
+        tension: 0.2,
+      },
+      {
+        label: "Miss Rate (%)",
+        data: aggregatedData.map((entry) => 100 - entry.hitRate),
+        borderColor: "#FF6384",
+        backgroundColor: "#FF6384",
+        fill: false,
+        tension: 0.2,
+      },
+    ],
+  };
+
+  // กราฟ Miss Rate vs Associativity vs Cache Size
+  const associativities = [1, 2, 4, 8, 16, "Fully"];
+  const cacheSizesForAssoc = [1, 2, 4, 8, 16, 32, 64, 128, 256];
   const colors = [
     "#FF6384",
     "#36A2EB",
@@ -332,16 +453,12 @@ const CacheResults_SetA = () => {
     "#FF4500",
   ];
 
-  const associativities = [1, 2, 4, 8, 16, "Fully"];
-  const cacheSizes = [1, 2, 4, 8, 16, 32, 64, 128, 256];
-
-  // Existing Miss Rate vs Associativity chart
-  const lineChartData = {
+  const missRateVsAssociativityChartData = {
     labels: associativities.map((a) =>
       a === "Fully" ? "Fully Associative" : a === 1 ? "1-way (Direct Mapped)" : `${a}-way`
     ),
-    datasets: cacheSizes.map((size, index) => ({
-      label: `${size} KiB`,
+    datasets: cacheSizesForAssoc.map((size, index) => ({
+      label: `${size} KB`,
       data: associativities.map((a) => {
         if (a === "Fully") {
           const { misses, hits } = calculateFullyAssociativeCache(size, blockSize, fileData, replacementPolicy, addressSize);
@@ -365,57 +482,45 @@ const CacheResults_SetA = () => {
     responsive: true,
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: "Miss Rate vs Associativity for Different Cache Sizes" },
+      title: { display: true, text: "Cache Access Results" },
       tooltip: {
         callbacks: {
-          label: (context) => `${context.dataset.label}: ${context.raw.toFixed(2)}%`,
+          label: (context) => {
+            const label = context.label || "";
+            const value = context.raw || 0;
+            const total = hits + misses;
+            const rate = ((value / total) * 100).toFixed(2);
+            return `${label}: ${value} (${rate}%)`;
+          },
         },
       },
     },
-    scales: {
-      y: { title: { display: true, text: "Miss Rate (%)" }, min: 0, max: 100 },
-      x: { title: { display: true, text: "Associativity" } },
-    },
   };
 
-  // New Hit Rate vs Cache Size chart
-  const hitRateChartData = {
-    labels: cacheSizes.map((size) => `${size} KiB`),
-    datasets: [{
-      label: `Hit Rate (${associativityDisplay})`,
-      data: cacheSizes.map((size) => {
-        if (mappingTechnique === "direct") {
-          const { misses, hits } = calculateDirectMappedCache(size, blockSize, fileData, addressSize);
-          return (hits / (hits + misses)) * 100;
-        } else if (mappingTechnique === "fullyAssociative") {
-          const { misses, hits } = calculateFullyAssociativeCache(size, blockSize, fileData, replacementPolicy, addressSize);
-          return (hits / (hits + misses)) * 100;
-        } else {
-          const { misses, hits } = calculateSetAssociativeCache(size, blockSize, fileData, associativity, replacementPolicy, addressSize);
-          return (hits / (hits + misses)) * 100;
-        }
-      }),
-      borderColor: "#36A2EB",
-      backgroundColor: "#36A2EB",
-      fill: false,
-      tension: 0.2,
-    }],
-  };
-
-  const hitRateChartOptions = {
+  const missRateVsAssociativityOptions = {
     responsive: true,
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: `Hit Rate vs Cache Size (${associativityDisplay})` },
+      title: { display: true, text: "Miss Rate vs Associativity for Different Cache Sizes" },
       tooltip: {
         callbacks: {
-          label: (context) => `${context.dataset.label}: ${context.raw.toFixed(2)}%`,
+          label: (context) => {
+            const label = context.dataset.label || "";
+            const value = context.raw || 0;
+            return `${label}: ${value.toFixed(2)}%`;
+          },
         },
       },
     },
     scales: {
-      y: { title: { display: true, text: "Hit Rate (%)" }, min: 0, max: 100 },
-      x: { title: { display: true, text: "Cache Size (KiB)" } },
+      y: {
+        title: { display: true, text: "Miss Rate (%)" },
+        min: 0,
+        max: 100,
+      },
+      x: {
+        title: { display: true, text: "Associativity" },
+      },
     },
   };
 
@@ -433,7 +538,11 @@ const CacheResults_SetA = () => {
             <p className="text-lg">Hits: {hits}</p>
             <p className="text-lg">Misses: {misses}</p>
             <p className="text-lg">Hit Rate: {hitRate}%</p>
+            {invalidRows > 0 && (
+              <p className="text-sm text-red-500">Warning: {invalidRows} invalid rows detected in CSV.</p>
+            )}
           </div>
+
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Parameters:</h2>
             <p className="text-lg">Cache Size: {cacheSize} KB</p>
@@ -441,23 +550,52 @@ const CacheResults_SetA = () => {
             <p className="text-lg">Replacement Policy: {replacementPolicy}</p>
             <p className="text-lg">Memory Size: {memorySize} MB</p>
             <p className="text-lg">Mapping Technique: {mappingTechnique}</p>
-            <p className="text-lg">Associativity: {associativityDisplay}</p>
+            <p className="text-lg">Associativity: {associativity}-way</p>
             <p className="text-lg">Address Size: {addressSize} bits</p>
           </div>
 
-          <div className="col-span-2">
-            <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Associativity:</h2>
-            <Line data={lineChartData} options={chartOptions} />
-            <p className="text-sm text-gray-500 mt-2">
-              Shows the Miss Rate (%) for different Associativities (1-way (Direct Mapped), 2-way, 4-way, 8-way, 16-way, and Fully Associative) and Cache Sizes (1 KiB to 256 KiB).
-            </p>
+          <div>
+            <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Access Results:</h2>
+            <Bar data={barChartData} options={chartOptions} />
+            <p className="text-sm text-gray-500 mt-2">แสดงจำนวน Hits (สีเขียว) และ Misses (สีแดง) ที่เกิดขึ้นระหว่างการจำลอง</p>
           </div>
 
-          <div className="col-span-2">
+          <div>
+            <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Block Size:</h2>
+            <Line data={lineChartData} options={chartOptions} />
+            <p className="text-sm text-gray-500 mt-2">แสดงอัตราการ Miss (%) เมื่อ Block Size เปลี่ยนแปลง</p>
+          </div>
+
+          <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Hit Rate vs Cache Size:</h2>
-            <Line data={hitRateChartData} options={hitRateChartOptions} />
+            <Line data={hitRateChartData} options={chartOptions} />
+            <p className="text-sm text-gray-500 mt-2">แสดงอัตราการ Hit (%) เมื่อ Cache Size เปลี่ยนแปลง</p>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Replacement Policy:</h2>
+            <Bar data={missRateByPolicyChartData} options={chartOptions} />
+            <p className="text-sm text-gray-500 mt-2">แสดงอัตราการ Miss (%) สำหรับแต่ละ Replacement Policy (LRU, FIFO, Random)</p>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold text-blue-700 mb-2">Access Pattern:</h2>
+            <Line data={accessPatternChartData} options={chartOptions} />
+            <p className="text-sm text-gray-500 mt-2">แสดงอัตราการ Hit และ Miss (%) ในช่วงการเข้าถึงข้อมูล</p>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold text-blue-700 mb-2">Top 10 Tags by Frequency:</h2>
+            <Bar data={tagDistributionChartData} options={chartOptions} />
+            <p className="text-sm text-gray-500 mt-2">แสดง Tag ที่ถูกเข้าถึงบ่อยที่สุด 10 อันดับแรก</p>
+          </div>
+
+          {/* กราฟใหญ่ Miss Rate vs Associativity vs Cache Size */}
+          <div className="col-span-2">
+            <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Associativity vs Cache Size:</h2>
+            <Line data={missRateVsAssociativityChartData} options={missRateVsAssociativityOptions} />
             <p className="text-sm text-gray-500 mt-2">
-              Shows the Hit Rate (%) for different Cache Sizes with {associativityDisplay}.
+              แสดงอัตราการ Miss (%) สำหรับระดับ Associativity (1-way (Direct Mapped), 2-way, 4-way, 8-way, 16-way, Fully Associative) โดยเปรียบเทียบกับ Cache Size (1 KB ถึง 256 KB) คง Block Size ตามที่กำหนด
             </p>
           </div>
 

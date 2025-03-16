@@ -2,217 +2,236 @@ import React, { useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Bar, Line } from "react-chartjs-2";
 import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    LineElement,
-    PointElement,
-    Title,
-    Tooltip,
-    Legend,
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip,
+  Legend,
 } from "chart.js";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend);
 
-const calculateDirectMappedCache = (cacheSize, blockSize, fileData) => {
-    const cacheSizeBytes = cacheSize * 1024;
+const calculateDirectMappedCache = (cacheSize, blockSize, fileData, addressSize) => {
+  const cacheSizeBytes = cacheSize * 1024;
 
-    if (blockSize <= 0 || !Number.isInteger(blockSize)) {
-        throw new Error("Block size must be a positive integer.");
+  if (blockSize <= 0 || !Number.isInteger(blockSize)) {
+    throw new Error("Block size must be a positive integer.");
+  }
+  if ((blockSize & (blockSize - 1)) !== 0) { // ตรวจสอบว่า blockSize เป็นกำลังสอง
+    throw new Error("Block size must be a power of 2.");
+  }
+  if (cacheSizeBytes <= 0 || !Number.isInteger(cacheSizeBytes)) {
+    throw new Error("Cache size must be a positive integer.");
+  }
+  if (cacheSizeBytes % blockSize !== 0) {
+    throw new Error("Cache size must be a multiple of block size.");
+  }
+
+  const numberOfBlocks = cacheSizeBytes / blockSize;
+  const offsetBits = Math.log2(blockSize);
+  const indexBits = Math.log2(numberOfBlocks);
+  const tagBits = addressSize - offsetBits - indexBits; // ใช้ addressSize จาก props
+
+  if (tagBits < 0) { // เพิ่มการตรวจสอบ tagBits
+    throw new Error("Invalid cache configuration: tagBits cannot be negative.");
+  }
+
+  const cache = new Array(numberOfBlocks).fill(null);
+  let hits = 0, misses = 0;
+  let invalidRows = 0;
+
+  fileData.forEach((row, rowIndex) => {
+    const addressHex = row["Address(Hex)"];
+    if (!addressHex) {
+      invalidRows++;
+      console.warn(`Row ${rowIndex}: Missing Address(Hex)`);
+      return;
+    }
+    const addressDec = parseInt(addressHex, 16);
+    if (isNaN(addressDec)) {
+      invalidRows++;
+      console.warn(`Row ${rowIndex}: Invalid Address(Hex) - ${addressHex}`);
+      return;
     }
 
-    if (cacheSizeBytes <= 0 || !Number.isInteger(cacheSizeBytes)) {
-        throw new Error("Cache size must be a positive integer.");
+    const index = (addressDec >> offsetBits) & ((1 << indexBits) - 1);
+    const tag = addressDec >> (offsetBits + indexBits);
+
+    if (cache[index] === tag) {
+      hits++;
+    } else {
+      misses++;
+      cache[index] = tag;
     }
+  });
 
-    if (cacheSizeBytes % blockSize !== 0) {
-        throw new Error("Cache size must be a multiple of block size.");
-    }
-
-    const numberOfBlocks = cacheSizeBytes / blockSize;
-
-    const offsetBits = Math.log2(blockSize);
-    const indexBits = Math.log2(numberOfBlocks);
-    const tagBits = 16 - offsetBits - indexBits;
-
-    const cache = new Array(numberOfBlocks).fill(null);
-    let hits = 0,
-        misses = 0;
-
-    fileData.forEach((row) => {
-        const addressHex = row["Address(Hex)"];
-        if (!addressHex) return;
-        const addressDec = parseInt(addressHex, 16);
-        if (isNaN(addressDec)) return;
-
-        const index = (addressDec >> offsetBits) & ((1 << indexBits) - 1);
-        const tag = addressDec >> (offsetBits + indexBits);
-
-        if (cache[index] === tag) {
-            hits++;
-        } else {
-            misses++;
-            cache[index] = tag;
-        }
-    });
-
-    return { hits, misses };
+  return { hits, misses, invalidRows };
 };
 
-const CacheResults = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { cacheSize, blockSize, fileData, fileName, replacementPolicy, memorySize, mappingTechnique, associativity, addressSize } =
-        location.state || {};
+const CacheResults_Direct = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { cacheSize, blockSize, fileData, fileName, replacementPolicy, memorySize, mappingTechnique, associativity, addressSize } =
+    location.state || {};
 
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
-    const handleBack = () => {
-        navigate("/", {
-            state: {
-                memorySize,
-                cacheSize,
-                blockSize,
-                replacementPolicy,
-                fileData,
-                fileName,
-                mappingTechnique,
-                associativity,
-                addressSize,
-            },
-        });
-    };
-
-    if (!location.state || isNaN(cacheSize) || isNaN(blockSize) || blockSize <= 0 || cacheSize <= 0 || !fileData?.length) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-                <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
-                    <h1 className="text-3xl font-semibold text-blue-700 mb-2">Error</h1>
-                    <p className="text-md text-gray-500">Invalid simulation data. Please ensure cache size and block size are valid.</p>
-                </div>
-            </div>
-        );
-    }
-
-    const { hits, misses } = useMemo(() => calculateDirectMappedCache(cacheSize, blockSize, fileData), [cacheSize, blockSize, fileData]);
-
-    const blockSizes = [16, 32, 64, 128, 256];
-    const missRates = blockSizes.map((size) => {
-        const { misses, hits } = calculateDirectMappedCache(cacheSize, size, fileData);
-        return (misses / (hits + misses)) * 100;
+  const handleBack = () => {
+    navigate("/", {
+      state: {
+        memorySize,
+        cacheSize,
+        blockSize,
+        replacementPolicy,
+        fileData,
+        fileName,
+        mappingTechnique,
+        associativity,
+        addressSize,
+      },
     });
+  };
 
-    const barChartData = {
-        labels: ["Hits", "Misses"],
-        datasets: [
-            {
-                label: "Cache Access Results",
-                data: [hits, misses],
-                backgroundColor: ["#36A2EB", "#FF6384"],
-                borderColor: ["#36A2EB", "#FF6384"],
-                borderWidth: 1,
-            },
-        ],
-    };
-
-    const lineChartData = {
-        labels: blockSizes.map((size) => `${size} B`),
-        datasets: [
-            {
-                label: "Miss Rate (%)",
-                data: missRates,
-                fill: false,
-                borderColor: "#FF6384",
-                backgroundColor: "#FF6384",
-                tension: 0.2,
-            },
-        ],
-    };
-
-    const chartOptions = {
-        responsive: true,
-        plugins: {
-            legend: { position: "top" },
-            title: { display: true },
-        },
-    };
-
+  if (!location.state || isNaN(cacheSize) || isNaN(blockSize) || blockSize <= 0 || cacheSize <= 0 || !fileData?.length) {
     return (
-        <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-6xl border border-gray-200">
-                <div className="text-center mb-6">
-                    <h1 className="text-3xl font-semibold text-blue-700 mb-2">Direct Mapped Cache Results</h1>
-                    <p className="text-md text-gray-500">Results of the Direct Mapped Cache simulation.</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-6">
-                        <div>
-                            <h2 className="text-xl font-semibold text-blue-700 mb-2">Simulation Results:</h2>
-                            <p className="text-lg">Hits: {hits}</p>
-                            <p className="text-lg">Misses: {misses}</p>
-                            <p className="text-lg">Hit Rate: {((hits / (hits + misses)) * 100).toFixed(2)}%</p>
-                        </div>
-
-                        <div>
-                            <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Parameters:</h2>
-                            <p className="text-lg">Cache Size: {cacheSize} KB</p>
-                            <p className="text-lg">Block Size: {blockSize} B</p>
-                        </div>
-
-                        <div>
-                            <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Access Results:</h2>
-                            <Bar data={barChartData} options={chartOptions} />
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        <div>
-                            <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Block Size:</h2>
-                            <Line data={lineChartData} options={chartOptions} />
-                        </div>
-
-                        {fileData && (
-                            <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
-                                <h2 className="text-lg font-semibold text-blue-700 mb-2">Data Preview:</h2>
-                                <div className="overflow-y-scroll max-h-72">
-                                    <table className="w-full table-auto border-collapse">
-                                        <thead>
-                                            <tr className="bg-gray-200">
-                                                <th className="px-4 py-2 text-left border-b">Address(Hex)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {fileData.map((row, index) => (
-                                                <tr key={index}>
-                                                    <td className="px-4 py-2 border-b">{row["Address(Hex)"]}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <p className="text-sm text-gray-500 mt-2">
-                                    {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="mt-6 text-center">
-                    <button
-                        className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-                        onClick={handleBack}
-                    >
-                        ← Back
-                    </button>
-                </div>
-            </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
+          <h1 className="text-3xl font-semibold text-blue-700 mb-2">Error</h1>
+          <p className="text-md text-gray-500">Invalid simulation data. Please ensure cache size and block size are valid.</p>
         </div>
+      </div>
     );
+  }
+
+  const { hits, misses, invalidRows } = useMemo(() => 
+    calculateDirectMappedCache(cacheSize, blockSize, fileData, addressSize), 
+    [cacheSize, blockSize, fileData, addressSize]
+  );
+
+  const blockSizes = [16, 32, 64, 128, 256];
+  const missRates = blockSizes.map((size) => {
+    const { misses, hits } = calculateDirectMappedCache(cacheSize, size, fileData, addressSize);
+    return (misses / (hits + misses)) * 100;
+  });
+
+  const barChartData = {
+    labels: ["Hits", "Misses"],
+    datasets: [
+      {
+        label: "Cache Access Results",
+        data: [hits, misses],
+        backgroundColor: ["#36A2EB", "#FF6384"],
+        borderColor: ["#36A2EB", "#FF6384"],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const lineChartData = {
+    labels: blockSizes.map((size) => `${size} B`),
+    datasets: [
+      {
+        label: "Miss Rate (%)",
+        data: missRates,
+        fill: false,
+        borderColor: "#FF6384",
+        backgroundColor: "#FF6384",
+        tension: 0.2,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" },
+      title: { display: true },
+    },
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-6xl border border-gray-200">
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-semibold text-blue-700 mb-2">Direct Mapped Cache Results</h1>
+          <p className="text-md text-gray-500">Results of the Direct Mapped Cache simulation.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-blue-700 mb-2">Simulation Results:</h2>
+              <p className="text-lg">Hits: {hits}</p>
+              <p className="text-lg">Misses: {misses}</p>
+              <p className="text-lg">Hit Rate: {((hits / (hits + misses)) * 100).toFixed(2)}%</p>
+              {invalidRows > 0 && (
+                <p className="text-sm text-red-500">Warning: {invalidRows} invalid rows detected in CSV.</p>
+              )}
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Parameters:</h2>
+              <p className="text-lg">Cache Size: {cacheSize} KB</p>
+              <p className="text-lg">Block Size: {blockSize} B</p>
+              <p className="text-lg">Address Size: {addressSize} bits</p>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Access Results:</h2>
+              <Bar data={barChartData} options={chartOptions} />
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Block Size:</h2>
+              <Line data={lineChartData} options={chartOptions} />
+            </div>
+
+            {fileData && (
+              <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
+                <h2 className="text-lg font-semibold text-blue-700 mb-2">Data Preview:</h2>
+                <div className="overflow-y-scroll max-h-72">
+                  <table className="w-full table-auto border-collapse">
+                    <thead>
+                      <tr className="bg-gray-200">
+                        <th className="px-4 py-2 text-left border-b">Address(Hex)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fileData.map((row, index) => (
+                        <tr key={index}>
+                          <td className="px-4 py-2 border-b">{row["Address(Hex)"]}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-6 text-center">
+          <button
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+            onClick={handleBack}
+          >
+            ← Back
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-export default CacheResults;
+export default CacheResults_Direct;
