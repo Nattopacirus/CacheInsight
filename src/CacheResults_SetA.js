@@ -258,6 +258,8 @@ const CacheResults_SetA = () => {
 
   const hitRate = ((hits / (hits + misses)) * 100).toFixed(2);
 
+  // Bar Chart: Cache Access Results with Correct Percentage
+  const totalAccesses = hits + misses;
   const barChartData = {
     labels: ["Hits", "Misses"],
     datasets: [
@@ -271,6 +273,7 @@ const CacheResults_SetA = () => {
     ],
   };
 
+  // Line Chart: Miss Rate vs Block Size
   const blockSizes = [16, 32, 64, 128, 256];
   const missRates = useMemo(() => {
     return blockSizes.map((size) => {
@@ -300,6 +303,7 @@ const CacheResults_SetA = () => {
     ],
   };
 
+  // Line Chart: Hit Rate vs Cache Size
   const cacheSizes = [16, 32, 64, 128, 256];
   const hitRates = useMemo(() => {
     return cacheSizes.map((size) => {
@@ -329,6 +333,7 @@ const CacheResults_SetA = () => {
     ],
   };
 
+  // Bar Chart: Miss Rate vs Replacement Policy
   const policies = ["LRU", "FIFO", "Random"];
   const missRatesByPolicy = useMemo(() => {
     return policies.map((policy) => {
@@ -394,8 +399,6 @@ const CacheResults_SetA = () => {
       aggregated.push({
         index: i,
         hitRate: hitCount + missCount > 0 ? (hitCount / (hitCount + missCount)) * 100 : 0,
-        hitCount,
-        missCount,
       });
     }
     return aggregated;
@@ -486,13 +489,50 @@ const CacheResults_SetA = () => {
       tooltip: {
         callbacks: {
           label: (context) => {
-            const label = context.label || "";
-            const value = context.raw || 0;
+            const label = context.dataset.label || "";
+            const value = context.parsed.y;
             const total = hits + misses;
-            const rate = ((value / total) * 100).toFixed(2);
-            return `${label}: ${value} (${rate}%)`;
+            const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : "0.00";
+            return `${label}: ${value} (${percentage}%)`;
           },
         },
+      },
+    },
+    scales: {
+      y: {
+        title: { display: true, text: "Count" },
+        beginAtZero: true,
+      },
+      x: {
+        title: { display: true, text: "Result" },
+      },
+    },
+  };
+
+  const lineChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" },
+      title: { display: true, text: "Cache Access Results" },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.dataset.label || "";
+            const value = context.parsed.y;
+            return `${label}: ${value.toFixed(2)}%`;
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        title: { display: true, text: "Rate (%)" },
+        min: 0,
+        max: 100,
+        ticks: { stepSize: 10 },
+      },
+      x: {
+        title: { display: true, text: "Parameter" },
       },
     },
   };
@@ -506,7 +546,7 @@ const CacheResults_SetA = () => {
         callbacks: {
           label: (context) => {
             const label = context.dataset.label || "";
-            const value = context.raw || 0;
+            const value = context.parsed.y || 0;
             return `${label}: ${value.toFixed(2)}%`;
           },
         },
@@ -517,6 +557,7 @@ const CacheResults_SetA = () => {
         title: { display: true, text: "Miss Rate (%)" },
         min: 0,
         max: 100,
+        ticks: { stepSize: 10 },
       },
       x: {
         title: { display: true, text: "Associativity" },
@@ -556,37 +597,37 @@ const CacheResults_SetA = () => {
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Cache Access Results:</h2>
-            <Bar data={barChartData} options={chartOptions} />
+            <Bar data={barChartData} options={{ ...chartOptions, scales: { y: { title: { text: "Count" } }, x: { title: { text: "Result" } } } }} />
             <p className="text-sm text-gray-500 mt-2">Show the number of Hits (green) and Misses (red) that occur during the simulation.</p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Block Size:</h2>
-            <Line data={lineChartData} options={chartOptions} />
+            <Line data={lineChartData} options={{ ...lineChartOptions, scales: { y: { title: { text: "Miss Rate (%)" } }, x: { title: { text: "Block Size (B)" } } } }} />
             <p className="text-sm text-gray-500 mt-2">Show the Miss rate (%) when the Block Size changes.</p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Hit Rate vs Cache Size:</h2>
-            <Line data={hitRateChartData} options={chartOptions} />
+            <Line data={hitRateChartData} options={{ ...lineChartOptions, scales: { y: { title: { text: "Hit Rate (%)" } }, x: { title: { text: "Cache Size (KB)" } } } }} />
             <p className="text-sm text-gray-500 mt-2">Show the Hit rate (%) when the Cache Size changes.</p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Replacement Policy:</h2>
-            <Bar data={missRateByPolicyChartData} options={chartOptions} />
+            <Bar data={missRateByPolicyChartData} options={{ ...chartOptions, scales: { y: { title: { text: "Miss Rate (%)" } }, x: { title: { text: "Policy" } } } }} />
             <p className="text-sm text-gray-500 mt-2">Show the Miss rate (%) for each Replacement Policy (LRU, FIFO, Random).</p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Access Pattern:</h2>
-            <Line data={accessPatternChartData} options={chartOptions} />
+            <Line data={accessPatternChartData} options={{ ...lineChartOptions, scales: { y: { title: { text: "Rate (%)" } }, x: { title: { text: "Access Range" } } } }} />
             <p className="text-sm text-gray-500 mt-2">Show the Hit and Miss rates (%) over the data access period.</p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Top 10 Tags by Frequency:</h2>
-            <Bar data={tagDistributionChartData} options={chartOptions} />
+            <Bar data={tagDistributionChartData} options={{ ...chartOptions, scales: { y: { title: { text: "Frequency" } }, x: { title: { text: "Tag" } } } }} />
             <p className="text-sm text-gray-500 mt-2">Show the top 10 most frequently accessed Tags.</p>
           </div>
 
@@ -595,7 +636,7 @@ const CacheResults_SetA = () => {
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Associativity vs Cache Size:</h2>
             <Line data={missRateVsAssociativityChartData} options={missRateVsAssociativityOptions} />
             <p className="text-sm text-gray-500 mt-2">
-            Show the Miss rate (%) for different levels of Associativity (1-way (Direct Mapped), 2-way, 4-way, 8-way, 16-way, Fully Associative) while comparing with Cache Size (1 KB to 256 KB) with a fixed Block Size.
+              Show the Miss rate (%) for different levels of Associativity (1-way (Direct Mapped), 2-way, 4-way, 8-way, 16-way, Fully Associative) while comparing with Cache Size (1 KB to 256 KB) with a fixed Block Size.
             </p>
           </div>
 
