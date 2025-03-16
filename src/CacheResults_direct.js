@@ -343,7 +343,7 @@ const CacheResults_Direct = () => {
 
         {/* Simulation Results and Parameters */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div className="space-y-4">
+          <div className="space-y-1">
             <h2 className="text-xl font-semibold text-blue-700">Simulation Results:</h2>
             <p className="text-lg text-gray-700">Hits: <span className="font-medium">{hits}</span></p>
             <p className="text-lg text-gray-700">Misses: <span className="font-medium">{misses}</span></p>
@@ -354,7 +354,7 @@ const CacheResults_Direct = () => {
               <p className="text-sm text-red-500">Warning: {invalidRows} invalid rows detected in CSV</p>
             )}
           </div>
-          <div className="space-y-4">
+          <div className="space-y-2">
             <h2 className="text-xl font-semibold text-blue-700">Cache Parameters:</h2>
             <p className="text-lg text-gray-700">Cache Size: <span className="font-medium">{cacheSize} KB</span></p>
             <p className="text-lg text-gray-700">Block Size: <span className="font-medium">{blockSize} B</span></p>

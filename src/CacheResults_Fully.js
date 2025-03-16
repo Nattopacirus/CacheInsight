@@ -425,9 +425,9 @@ const CacheResults_Fully = () => {
             <h2 className="text-xl font-semibold text-blue-700 mb-2">
               Simulation Results:
             </h2>
-            <p className="text-lg">Hits: {hits}</p>
-            <p className="text-lg">Misses: {misses}</p>
-            <p className="text-lg">Hit Rate: {hitRate}%</p>
+            <p className="text-lg">Hits: <span className="font-medium">{hits}</span></p>
+            <p className="text-lg">Misses: <span className="font-medium">{misses}</span></p>
+            <p className="text-lg">Hit Rate: <span className="font-medium">{hitRate}%</span></p>
             {invalidRows > 0 && (
               <p className="text-sm text-red-500">
                 Warning: {invalidRows} invalid rows detected in CSV.
@@ -435,16 +435,16 @@ const CacheResults_Fully = () => {
             )}
           </div>
 
-          <div>
+          <div className="space-y-1">
             <h2 className="text-xl font-semibold text-blue-700 mb-2">
               Cache Parameters:
             </h2>
-            <p className="text-lg">Cache Size: {cacheSize} KB</p>
-            <p className="text-lg">Block Size: {blockSize} B</p>
-            <p className="text-lg">Replacement Policy: {replacementPolicy}</p>
-            <p className="text-lg">Memory Size: {memorySize} MB</p>
-            <p className="text-lg">Mapping Technique: {mappingTechnique}</p>
-            <p className="text-lg">Address Size: {addressSize} bits</p>
+            <p className="text-lg">Cache Size: <span className="font-medium">{cacheSize} KB</span></p>
+            <p className="text-lg">Block Size: <span className="font-medium">{blockSize} B</span></p>
+            <p className="text-lg">Replacement Policy: <span className="font-medium">{replacementPolicy}</span></p>
+            <p className="text-lg">Memory Size: <span className="font-medium">{memorySize} MB</span></p>
+            <p className="text-lg">Mapping Technique: <span className="font-medium">{mappingTechnique}</span></p>
+            <p className="text-lg">Address Size: <span className="font-medium">{addressSize} bits</span></p>
           </div>
 
           <div>
