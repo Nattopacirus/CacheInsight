@@ -73,7 +73,7 @@ const calculateFullyAssociativeCache = (cacheSize, blockSize, fileData, replacem
         if (replacementPolicy === "LRU" || replacementPolicy === "FIFO") {
           evictTag = accessOrder.shift();
         } else if (replacementPolicy === "Random") {
-          if (accessOrder.length === 0) return; // ป้องกันข้อผิดพลาดเมื่อ accessOrder ว่าง
+          if (accessOrder.length === 0) return;
           evictTag = accessOrder[Math.floor(Math.random() * accessOrder.length)];
           accessOrder.splice(accessOrder.indexOf(evictTag), 1);
         }
@@ -141,6 +141,9 @@ const CacheResults_Fully = () => {
     [cacheSize, blockSize, fileData, replacementPolicy, memorySize, addressSize]
   );
 
+  const hitRate = ((hits / (hits + misses)) * 100).toFixed(2);
+
+  // Bar Chart: Cache Access Results
   const barChartData = {
     labels: ["Hits", "Misses"],
     datasets: [
@@ -154,6 +157,7 @@ const CacheResults_Fully = () => {
     ],
   };
 
+  // Line Chart: Miss Rate vs Block Size
   const blockSizes = [16, 32, 64, 128, 256];
   const missRates = useMemo(() => {
     return blockSizes.map((size) => {
@@ -183,6 +187,7 @@ const CacheResults_Fully = () => {
     ],
   };
 
+  // Line Chart: Hit Rate vs Cache Size
   const cacheSizes = [16, 32, 64, 128, 256];
   const hitRates = useMemo(() => {
     return cacheSizes.map((size) => {
@@ -212,6 +217,7 @@ const CacheResults_Fully = () => {
     ],
   };
 
+  // Bar Chart: Miss Rate vs Replacement Policy
   const policies = ["LRU", "FIFO", "Random"];
   const missRatesByPolicy = useMemo(() => {
     return policies.map((policy) => {
@@ -240,12 +246,13 @@ const CacheResults_Fully = () => {
     ],
   };
 
+  // Bar Chart: Tag Distribution
   const tagFrequency = useMemo(() => {
     const frequency = {};
     fileData.forEach((row) => {
       const addressHex = row["Address(Hex)"];
       const addressDec = parseInt(addressHex, 16);
-      if (isNaN(addressDec)) return; // ข้ามที่อยู่ที่ไม่ถูกต้อง
+      if (isNaN(addressDec)) return;
       const tag = addressDec >> Math.log2(blockSize);
       frequency[tag] = (frequency[tag] || 0) + 1;
     });
@@ -268,6 +275,7 @@ const CacheResults_Fully = () => {
     ],
   };
 
+  // Aggregate Access Pattern Data
   const aggregateData = (data, interval) => {
     const aggregated = [];
     for (let i = 0; i < data.length; i += interval) {
@@ -277,30 +285,25 @@ const CacheResults_Fully = () => {
       aggregated.push({
         index: i,
         hitRate: hitCount + missCount > 0 ? (hitCount / (hitCount + missCount)) * 100 : 0,
-        hitCount,
-        missCount,
       });
-    }
+    });
     return aggregated;
   };
 
-  const interval = Math.max(1, Math.floor(fileData.length / 10)); // ปรับ interval ตามขนาดข้อมูล
+  const isDataSmall = fileData.length <= 500;
+  const interval = isDataSmall ? 1 : Math.max(1, Math.floor(fileData.length / 10));
   const aggregatedData = aggregateData(accessPattern, interval);
 
   const accessPatternChartData = {
-    labels: aggregatedData.map((entry) => `Access ${entry.index + 1}-${entry.index + interval}`),
+    labels: isDataSmall
+      ? accessPattern.map((_, i) => i + 1)
+      : aggregatedData.map((entry) => `Access ${entry.index + 1}-${entry.index + interval}`),
     datasets: [
       {
-        label: "Hit Rate (%)",
-        data: aggregatedData.map((entry) => entry.hitRate),
-        borderColor: "#36A2EB",
-        backgroundColor: "#36A2EB",
-        fill: false,
-        tension: 0.2,
-      },
-      {
-        label: "Miss Rate (%)",
-        data: aggregatedData.map((entry) => 100 - entry.hitRate),
+        label: isDataSmall ? "Access Pattern (Hit/Miss)" : "Hit Rate (%)",
+        data: isDataSmall
+          ? accessPattern.map((entry) => (entry.hit ? 1 : 0))
+          : aggregatedData.map((entry) => entry.hitRate),
         borderColor: "#FF6384",
         backgroundColor: "#FF6384",
         fill: false,
@@ -309,6 +312,7 @@ const CacheResults_Fully = () => {
     ],
   };
 
+  // Chart Options
   const chartOptions = {
     responsive: true,
     plugins: {
@@ -317,13 +321,30 @@ const CacheResults_Fully = () => {
       tooltip: {
         callbacks: {
           label: (context) => {
-            const label = context.label || "";
+            const label = context.dataset.label || "";
             const value = context.raw || 0;
-            const total = hits + misses;
-            const rate = ((value / total) * 100).toFixed(2);
-            return `${label}: ${value} (${rate}%)`;
+            if (label.includes("Hit/Miss")) {
+              return `${label}: ${value === 1 ? "Hit" : "Miss"}`;
+            }
+            return `${label}: ${value.toFixed(2)}%`;
           },
         },
+      },
+    },
+    scales: {
+      y: {
+        title: { display: true, text: isDataSmall ? "Hit/Miss" : "Hit Rate (%)" },
+        min: isDataSmall ? 0 : 0,
+        max: isDataSmall ? 1 : 100,
+        ticks: isDataSmall
+          ? {
+              stepSize: 1,
+              callback: (value) => (value === 1 ? "Hit" : "Miss"),
+            }
+          : undefined,
+      },
+      x: {
+        title: { display: true, text: isDataSmall ? "Access Index" : "Access Range" },
       },
     },
   };
@@ -341,7 +362,7 @@ const CacheResults_Fully = () => {
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Simulation Results:</h2>
             <p className="text-lg">Hits: {hits}</p>
             <p className="text-lg">Misses: {misses}</p>
-            <p className="text-lg">Hit Rate: {((hits / (hits + misses)) * 100).toFixed(2)}%</p>
+            <p className="text-lg">Hit Rate: {hitRate}%</p>
             {invalidRows > 0 && (
               <p className="text-sm text-red-500">Warning: {invalidRows} invalid rows detected in CSV.</p>
             )}
@@ -384,7 +405,11 @@ const CacheResults_Fully = () => {
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Access Pattern:</h2>
             <Line data={accessPatternChartData} options={chartOptions} />
-            <p className="text-sm text-gray-500 mt-2">แสดงอัตราการ Hit และ Miss (%) ในช่วงการเข้าถึงข้อมูล</p>
+            <p className="text-sm text-gray-500 mt-2">
+              {isDataSmall
+                ? "แสดง Hit (1) และ Miss (0) สำหรับการเข้าถึงข้อมูลแต่ละครั้ง"
+                : "แสดงอัตราการ Hit (%) ในช่วงการเข้าถึงข้อมูล"}
+            </p>
           </div>
 
           <div>
