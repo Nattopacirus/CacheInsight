@@ -335,6 +335,7 @@ const CacheResults_SetA = () => {
   const associativities = [1, 2, 4, 8, 16, "Fully"];
   const cacheSizes = [1, 2, 4, 8, 16, 32, 64, 128, 256];
 
+  // Existing Miss Rate vs Associativity chart
   const lineChartData = {
     labels: associativities.map((a) =>
       a === "Fully" ? "Fully Associative" : a === 1 ? "1-way (Direct Mapped)" : `${a}-way`
@@ -364,26 +365,57 @@ const CacheResults_SetA = () => {
     responsive: true,
     plugins: {
       legend: { position: "top" },
-      title: { display: true, text: "Miss Rate vs Associativity (including Fully Associative) for Different Cache Sizes" },
+      title: { display: true, text: "Miss Rate vs Associativity for Different Cache Sizes" },
       tooltip: {
         callbacks: {
-          label: (context) => {
-            const label = context.dataset.label || "";
-            const value = context.raw || 0;
-            return `${label}: ${value.toFixed(2)}%`;
-          },
+          label: (context) => `${context.dataset.label}: ${context.raw.toFixed(2)}%`,
         },
       },
     },
     scales: {
-      y: {
-        title: { display: true, text: "Miss Rate (%)" },
-        min: 0,
-        max: 100,
+      y: { title: { display: true, text: "Miss Rate (%)" }, min: 0, max: 100 },
+      x: { title: { display: true, text: "Associativity" } },
+    },
+  };
+
+  // New Hit Rate vs Cache Size chart
+  const hitRateChartData = {
+    labels: cacheSizes.map((size) => `${size} KiB`),
+    datasets: [{
+      label: `Hit Rate (${associativityDisplay})`,
+      data: cacheSizes.map((size) => {
+        if (mappingTechnique === "direct") {
+          const { misses, hits } = calculateDirectMappedCache(size, blockSize, fileData, addressSize);
+          return (hits / (hits + misses)) * 100;
+        } else if (mappingTechnique === "fullyAssociative") {
+          const { misses, hits } = calculateFullyAssociativeCache(size, blockSize, fileData, replacementPolicy, addressSize);
+          return (hits / (hits + misses)) * 100;
+        } else {
+          const { misses, hits } = calculateSetAssociativeCache(size, blockSize, fileData, associativity, replacementPolicy, addressSize);
+          return (hits / (hits + misses)) * 100;
+        }
+      }),
+      borderColor: "#36A2EB",
+      backgroundColor: "#36A2EB",
+      fill: false,
+      tension: 0.2,
+    }],
+  };
+
+  const hitRateChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: "top" },
+      title: { display: true, text: `Hit Rate vs Cache Size (${associativityDisplay})` },
+      tooltip: {
+        callbacks: {
+          label: (context) => `${context.dataset.label}: ${context.raw.toFixed(2)}%`,
+        },
       },
-      x: {
-        title: { display: true, text: "Associativity" },
-      },
+    },
+    scales: {
+      y: { title: { display: true, text: "Hit Rate (%)" }, min: 0, max: 100 },
+      x: { title: { display: true, text: "Cache Size (KiB)" } },
     },
   };
 
@@ -418,6 +450,14 @@ const CacheResults_SetA = () => {
             <Line data={lineChartData} options={chartOptions} />
             <p className="text-sm text-gray-500 mt-2">
               Shows the Miss Rate (%) for different Associativities (1-way (Direct Mapped), 2-way, 4-way, 8-way, 16-way, and Fully Associative) and Cache Sizes (1 KiB to 256 KiB).
+            </p>
+          </div>
+
+          <div className="col-span-2">
+            <h2 className="text-xl font-semibold text-blue-700 mb-2">Hit Rate vs Cache Size:</h2>
+            <Line data={hitRateChartData} options={hitRateChartOptions} />
+            <p className="text-sm text-gray-500 mt-2">
+              Shows the Hit Rate (%) for different Cache Sizes with {associativityDisplay}.
             </p>
           </div>
 
