@@ -1,4 +1,3 @@
-//by nattopacirus
 import React, { useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Bar, Line } from "react-chartjs-2";
@@ -182,8 +181,8 @@ const CacheResults_Fully = () => {
             {
                 label: "Cache Access Results",
                 data: [hits, misses],
-                backgroundColor: ["#36A2EB", "#FF6384"],
-                borderColor: ["#36A2EB", "#FF6384"],
+                backgroundColor: ["#4CAF50", "#F44336"], // สีเขียวสำหรับ Hits, สีแดงสำหรับ Misses
+                borderColor: ["#4CAF50", "#F44336"],
                 borderWidth: 1,
             },
         ],
@@ -205,6 +204,21 @@ const CacheResults_Fully = () => {
         });
     }, [cacheSize, fileData, replacementPolicy, memorySize, addressSize]);
 
+    // Generate line chart data for Miss Rate vs Block Size
+    const lineChartData = {
+        labels: blockSizes.map((size) => `${size} B`),
+        datasets: [
+            {
+                label: "Miss Rate (%)",
+                data: missRates,
+                fill: false,
+                borderColor: "#FF6384",
+                backgroundColor: "#FF6384",
+                tension: 0.2,
+            },
+        ],
+    };
+
     // Generate hit rates for different cache sizes
     const cacheSizes = [16, 32, 64, 128, 256]; // In KB
     const hitRates = useMemo(() => {
@@ -220,6 +234,21 @@ const CacheResults_Fully = () => {
             return (hits / (hits + misses)) * 100;
         });
     }, [blockSize, fileData, replacementPolicy, memorySize, addressSize]);
+
+    // Generate line chart data for Hit Rate vs Cache Size
+    const hitRateChartData = {
+        labels: cacheSizes.map((size) => `${size} KB`),
+        datasets: [
+            {
+                label: "Hit Rate (%)",
+                data: hitRates,
+                fill: false,
+                borderColor: "#36A2EB",
+                backgroundColor: "#36A2EB",
+                tension: 0.2,
+            },
+        ],
+    };
 
     // Generate miss rates for different replacement policies
     const policies = ["LRU", "FIFO", "Random"];
@@ -237,6 +266,20 @@ const CacheResults_Fully = () => {
         });
     }, [cacheSize, blockSize, fileData, memorySize, addressSize]);
 
+    // Generate bar chart data for Miss Rate vs Replacement Policy
+    const missRateByPolicyChartData = {
+        labels: policies,
+        datasets: [
+            {
+                label: "Miss Rate (%)",
+                data: missRatesByPolicy,
+                backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+                borderColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+                borderWidth: 1,
+            },
+        ],
+    };
+
     // Generate tag frequency data
     const tagFrequency = useMemo(() => {
         const frequency = {};
@@ -252,76 +295,6 @@ const CacheResults_Fully = () => {
     const sortedTags = Object.keys(tagFrequency).sort((a, b) => tagFrequency[b] - tagFrequency[a]);
     const topTags = sortedTags.slice(0, 10); // Top 10 tags
 
-    // Aggregate access pattern data for better visualization
-    const aggregateData = (data, interval) => {
-        const aggregated = [];
-        for (let i = 0; i < data.length; i += interval) {
-            const chunk = data.slice(i, i + interval);
-            const average = chunk.reduce((sum, entry) => sum + (entry.hit ? 1 : 0), 0) / chunk.length;
-            aggregated.push({ index: i, hitRate: average });
-        }
-        return aggregated;
-    };
-
-    const aggregatedData = aggregateData(accessPattern, 100); // Aggregate every 100 accesses
-
-    // Generate access pattern data for the chart
-    const accessPatternChartData = {
-        labels: aggregatedData.map(entry => entry.index),
-        datasets: [{
-            label: 'Access Pattern',
-            data: aggregatedData.map(entry => entry.hitRate),
-            borderColor: '#FF6384',
-            backgroundColor: '#FF6384',
-            fill: false,
-            tension: 0.2,
-        }]
-    };
-
-    // Generate line chart data for Miss Rate vs Block Size
-    const lineChartData = {
-        labels: blockSizes.map((size) => `${size} B`),
-        datasets: [
-            {
-                label: "Miss Rate (%)",
-                data: missRates,
-                fill: false,
-                borderColor: "#FF6384",
-                backgroundColor: "#FF6384",
-                tension: 0.2,
-            },
-        ],
-    };
-
-    // Generate line chart data for Hit Rate vs Cache Size
-    const hitRateChartData = {
-        labels: cacheSizes.map((size) => `${size} KB`),
-        datasets: [
-            {
-                label: "Hit Rate (%)",
-                data: hitRates,
-                fill: false,
-                borderColor: "#36A2EB",
-                backgroundColor: "#36A2EB",
-                tension: 0.2,
-            },
-        ],
-    };
-
-    // Generate bar chart data for Miss Rate vs Replacement Policy
-    const missRateByPolicyChartData = {
-        labels: policies,
-        datasets: [
-            {
-                label: "Miss Rate (%)",
-                data: missRatesByPolicy,
-                backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
-                borderColor: ["#FF6384", "#36A2EB", "#FFCE56"],
-                borderWidth: 1,
-            },
-        ],
-    };
-
     // Generate bar chart data for Tag Distribution
     const tagDistributionChartData = {
         labels: topTags.map((tag) => `Tag ${tag}`),
@@ -336,12 +309,65 @@ const CacheResults_Fully = () => {
         ],
     };
 
+    // Aggregate access pattern data for better visualization
+    const aggregateData = (data, interval) => {
+        const aggregated = [];
+        for (let i = 0; i < data.length; i += interval) {
+            const chunk = data.slice(i, i + interval);
+            const hitCount = chunk.filter(entry => entry.hit).length;
+            const missCount = chunk.filter(entry => !entry.hit).length;
+            aggregated.push({
+                index: i,
+                hitRate: (hitCount / (hitCount + missCount)) * 100,
+                hitCount,
+                missCount,
+            });
+        }
+        return aggregated;
+    };
+
+    const aggregatedData = aggregateData(accessPattern, 1000); // Aggregate every 1000 accesses
+
+    // Generate access pattern data for the chart
+    const accessPatternChartData = {
+        labels: aggregatedData.map(entry => `Access ${entry.index + 1}-${entry.index + 1000}`),
+        datasets: [
+            {
+                label: 'Hit Rate (%)',
+                data: aggregatedData.map(entry => entry.hitRate),
+                borderColor: '#36A2EB',
+                backgroundColor: '#36A2EB',
+                fill: false,
+                tension: 0.2,
+            },
+            {
+                label: 'Miss Rate (%)',
+                data: aggregatedData.map(entry => 100 - entry.hitRate),
+                borderColor: '#FF6384',
+                backgroundColor: '#FF6384',
+                fill: false,
+                tension: 0.2,
+            },
+        ],
+    };
+
     // Chart options
     const chartOptions = {
         responsive: true,
         plugins: {
             legend: { position: "top" },
-            title: { display: true },
+            title: { display: true, text: 'Cache Access Results' },
+            tooltip: {
+                callbacks: {
+                    label: (context) => {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        const total = hits + misses;
+                        const rate = ((value / total) * 100).toFixed(2);
+                        return `${label}: ${value} (${rate}%)`;
+                    },
+                },
+            },
         },
     };
 
@@ -389,6 +415,9 @@ const CacheResults_Fully = () => {
                             Cache Access Results:
                         </h2>
                         <Bar data={barChartData} options={chartOptions} />
+                        <p className="text-sm text-gray-500 mt-2">
+                            แสดงจำนวน Hits (สีเขียว) และ Misses (สีแดง) ที่เกิดขึ้นระหว่างการจำลอง
+                        </p>
                     </div>
 
                     {/* Miss Rate vs Block Size */}
@@ -397,6 +426,9 @@ const CacheResults_Fully = () => {
                             Miss Rate vs Block Size:
                         </h2>
                         <Line data={lineChartData} options={chartOptions} />
+                        <p className="text-sm text-gray-500 mt-2">
+                            แสดงอัตราการ Miss (%) เมื่อ Block Size เปลี่ยนแปลง
+                        </p>
                     </div>
 
                     {/* Hit Rate vs Cache Size */}
@@ -405,6 +437,9 @@ const CacheResults_Fully = () => {
                             Hit Rate vs Cache Size:
                         </h2>
                         <Line data={hitRateChartData} options={chartOptions} />
+                        <p className="text-sm text-gray-500 mt-2">
+                            แสดงอัตราการ Hit (%) เมื่อ Cache Size เปลี่ยนแปลง
+                        </p>
                     </div>
 
                     {/* Miss Rate vs Replacement Policy */}
@@ -413,6 +448,9 @@ const CacheResults_Fully = () => {
                             Miss Rate vs Replacement Policy:
                         </h2>
                         <Bar data={missRateByPolicyChartData} options={chartOptions} />
+                        <p className="text-sm text-gray-500 mt-2">
+                            แสดงอัตราการ Miss (%) สำหรับแต่ละ Replacement Policy (LRU, FIFO, Random)
+                        </p>
                     </div>
 
                     {/* Access Pattern */}
@@ -421,6 +459,9 @@ const CacheResults_Fully = () => {
                             Access Pattern:
                         </h2>
                         <Line data={accessPatternChartData} options={chartOptions} />
+                        <p className="text-sm text-gray-500 mt-2">
+                            แสดงอัตราการ Hit และ Miss (%) ในช่วงการเข้าถึงข้อมูล
+                        </p>
                     </div>
 
                     {/* Tag Distribution */}
@@ -429,6 +470,9 @@ const CacheResults_Fully = () => {
                             Top 10 Tags by Frequency:
                         </h2>
                         <Bar data={tagDistributionChartData} options={chartOptions} />
+                        <p className="text-sm text-gray-500 mt-2">
+                            แสดง Tag ที่ถูกเข้าถึงบ่อยที่สุด 10 อันดับแรก
+                        </p>
                     </div>
 
                     {/* CSV Data Preview */}
