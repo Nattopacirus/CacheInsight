@@ -595,7 +595,7 @@ const CacheResults_Fully = () => {
 
         <div className="mt-6 text-center">
           <button
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-lg shadow hover:from-indigo-700 hover:to-blue-600 transition"
             onClick={handleBack}
           >
             ← Back

@@ -19,8 +19,7 @@ const CacheSimulation = () => {
 
   useEffect(() => {
     if (location.state) {
-      const { memorySize, cacheSize, blockSize, replacementPolicy, fileData, fileName, mappingTechnique, associativity, addressSize } =
-        location.state;
+      const { memorySize, cacheSize, blockSize, replacementPolicy, fileData, fileName, mappingTechnique, associativity, addressSize } = location.state;
       setMemorySize(memorySize);
       setCacheSize(cacheSize);
       setBlockSize(blockSize);
@@ -47,7 +46,7 @@ const CacheSimulation = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target.result;
-      const result = Papa.parse(text, {
+      Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
         dynamicTyping: true,
@@ -97,21 +96,33 @@ const CacheSimulation = () => {
       setError("Cache Size must be greater than or equal to Block Size.");
       return;
     }
-
+  
+    // เพิ่มการตรวจสอบสำหรับ Set-Associative Cache
+    if (mappingTechnique === "setAssociative") {
+      const cacheSizeBytes = cacheSize * 1024;
+      const numberOfSets = cacheSizeBytes / blockSize / associativity;
+      if (numberOfSets < 1 || !Number.isInteger(numberOfSets)) {
+        setError(
+          `Invalid cache configuration: Number of sets (${numberOfSets}) must be a positive integer. Please adjust Cache Size (${cacheSize} KB), Block Size (${blockSize} B), or Associativity (${associativity}).`
+        );
+        return;
+      }
+    }
+  
     setError("");
-
+  
     const state = {
-      memorySize,
-      cacheSize,
-      blockSize,
+      memorySize: Math.floor(memorySize),
+      cacheSize: Math.floor(cacheSize),
+      blockSize: Math.floor(blockSize),
       replacementPolicy,
       fileData,
       mappingTechnique,
       fileName,
-      associativity,
-      addressSize,
+      associativity: Math.floor(associativity),
+      addressSize: Math.floor(addressSize),
     };
-
+  
     switch (mappingTechnique) {
       case "directMapped":
         navigate("/results_direct", { state });
@@ -128,179 +139,182 @@ const CacheSimulation = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-6">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 flex items-center justify-center p-6">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl p-8 transform transition-all hover:shadow-3xl flex flex-col">
+        {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-semibold text-blue-700 mb-2">Cache Insight</h1>
-          <h2 className="text-1xl font-semibold text-blue-700 mb-2">Simulation & Analysis of Memory Access</h2>
-          <p className="text-lg text-gray-500">
-  Analyze cache performance with custom mapping simulations.
-  Upload your data to explore and optimize cache behavior.
-</p>
+          <h1 className="text-4xl font-bold text-indigo-700 bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">
+            Cache Insight
+          </h1>
+          <h2 className="text-xl font-medium text-gray-600 mt-2">Simulation & Analysis of Memory Access</h2>
+          <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+            Dive into cache performance with custom simulations. Upload your data and optimize with ease.
+          </p>
         </div>
 
+        {/* Error Message */}
         {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">{error}</div>
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg animate-fade-in">
+            {error}
+          </div>
         )}
 
-        <div className="space-y-6">
-          <div>
-            <label className="block font-semibold text-gray-700 mb-2">Memory Size (MB):</label>
-            <input
-              type="number"
-              className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={memorySize}
-              onChange={(e) => setMemorySize(Math.max(0, Math.min(1024, e.target.value)))}
-              min="0"
-              max="1024"
-            />
-            <p className="text-sm text-gray-500 mt-1">Memory Size must be between 0 and 1024 MB.</p>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-gray-700 mb-2">Cache Size (KB):</label>
-            <select
-              className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={cacheSize}
-              onChange={(e) => setCacheSize(parseInt(e.target.value))}
-            >
-              <option value={1}>1 KB</option>
-              <option value={2}>2 KB</option>
-              <option value={4}>4 KB</option>
-              <option value={8}>8 KB</option>
-              <option value={16}>16 KB</option>
-              <option value={32}>32 KB</option>
-              <option value={64}>64 KB</option>
-              <option value={128}>128 KB</option>
-              <option value={256}>256 KB</option>
-            </select>
-            <p className="text-sm text-gray-500 mt-1">Cache Size must be between 1 and 256 KB.</p>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-gray-700 mb-2">Block Size (B):</label>
-            <select
-              className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={blockSize}
-              onChange={(e) => setBlockSize(parseInt(e.target.value))}
-            >
-              <option value={2}>2 B</option>
-              <option value={4}>4 B</option>
-              <option value={8}>8 B</option>
-              <option value={16}>16 B</option>
-              <option value={32}>32 B</option>
-              <option value={64}>64 B</option>
-              <option value={128}>128 B</option>
-              <option value={256}>256 B</option>
-            </select>
-            <p className="text-sm text-gray-500 mt-1">Block Size must be a power of 2 between 2 and 256 B.</p>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-gray-700 mb-2">Cache Mapping Technique:</label>
-            <select
-              className="w-full p-4 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
-              value={mappingTechnique}
-              onChange={(e) => setMappingTechnique(e.target.value)}
-            >
-              <option value="directMapped">Direct Mapped</option>
-              <option value="setAssociative">Set-Associative Cache</option>
-              <option value="fullyAssociative">Fully Associative</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-gray-700 mb-2">Address Size (bits):</label>
-            <select
-              className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={addressSize}
-              onChange={(e) => setAddressSize(parseInt(e.target.value))}
-            >
-              <option value={16}>16 bits</option>
-              <option value={32}>32 bits</option>
-              <option value={64}>64 bits</option>
-            </select>
-            <p className="text-sm text-gray-500 mt-1">Select the address size in bits.</p>
-          </div>
-
-          {mappingTechnique === "setAssociative" && (
+        {/* Form - Horizontal Layout */}
+        <div className="grid grid-cols-3 gap-6">
+          {/* Left Column */}
+          <div className="space-y-4">
             <div>
-              <label className="block font-semibold text-gray-700 mb-2">Associativity:</label>
-              <select
-                className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={associativity}
-                onChange={(e) => setAssociativity(parseInt(e.target.value))}
-              >
-                <option value={2}>2-way</option>
-                <option value={4}>4-way</option>
-                <option value={8}>8-way</option>
-                <option value={16}>16-way</option>
-              </select>
-              <p className="text-sm text-gray-500 mt-1">Associativity is only applicable for Set-Associative Cache.</p>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Memory Size (MB)</label>
+              <input
+                type="number"
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                value={memorySize}
+                onChange={(e) => setMemorySize(Math.max(0, Math.min(1024, e.target.value)))}
+                min="0"
+                max="1024"
+              />
+              <p className="text-xs text-gray-400 mt-1">0-1024 MB</p>
             </div>
-          )}
 
-          <div>
-            <label className="block font-semibold text-gray-700 mb-2">Replacement Policy:</label>
-            <select
-              className={`w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
-                mappingTechnique === "directMapped" ? "bg-gray-200 cursor-not-allowed" : "bg-white"
-              }`}
-              value={replacementPolicy}
-              onChange={(e) => setReplacementPolicy(e.target.value)}
-              disabled={mappingTechnique === "directMapped"}
-            >
-              <option value="LRU">Least Recently Used (LRU)</option>
-              <option value="FIFO">First In First Out (FIFO)</option>
-              <option value="Random">Random</option>
-            </select>
-            {mappingTechnique === "directMapped" && (
-              <p className="text-sm text-gray-500 mt-1">Replacement Policy is not applicable for Direct Mapped Cache.</p>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Cache Size (KB)</label>
+              <select
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
+                value={cacheSize}
+                onChange={(e) => setCacheSize(parseInt(e.target.value))}
+              >
+                {[1, 2, 4, 8, 16, 32, 64, 128, 256].map((size) => (
+                  <option key={size} value={size}>{size} KB</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-1">1-256 KB</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Block Size (B)</label>
+              <select
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
+                value={blockSize}
+                onChange={(e) => setBlockSize(parseInt(e.target.value))}
+              >
+                {[2, 4, 8, 16, 32, 64, 128, 256].map((size) => (
+                  <option key={size} value={size}>{size} B</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Power of 2, up to 256 B</p>
+            </div>
+          </div>
+
+          {/* Middle Column */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Cache Mapping Technique</label>
+              <select
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
+                value={mappingTechnique}
+                onChange={(e) => setMappingTechnique(e.target.value)}
+              >
+                <option value="directMapped">Direct Mapped</option>
+                <option value="setAssociative">Set-Associative</option>
+                <option value="fullyAssociative">Fully Associative</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Address Size (bits)</label>
+              <select
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
+                value={addressSize}
+                onChange={(e) => setAddressSize(parseInt(e.target.value))}
+              >
+                {[16, 32, 64].map((size) => (
+                  <option key={size} value={size}>{size} bits</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Select address size</p>
+            </div>
+
+            {mappingTechnique === "setAssociative" && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Associativity</label>
+                <select
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
+                  value={associativity}
+                  onChange={(e) => setAssociativity(parseInt(e.target.value))}
+                >
+                  {[2, 4, 8, 16].map((level) => (
+                    <option key={level} value={level}>{level}-way</option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-400 mt-1">For Set-Associative only</p>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Replacement Policy</label>
+              <select
+                className={`w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none ${mappingTechnique === "directMapped" ? "bg-gray-200 cursor-not-allowed" : "bg-gray-50"
+                  }`}
+                value={replacementPolicy}
+                onChange={(e) => setReplacementPolicy(e.target.value)}
+                disabled={mappingTechnique === "directMapped"}
+              >
+                <option value="LRU">Least Recently Used (LRU)</option>
+                <option value="FIFO">First In First Out (FIFO)</option>
+                <option value="Random">Random</option>
+              </select>
+              {mappingTechnique === "directMapped" && (
+                <p className="text-xs text-gray-400 mt-1">Not applicable for Direct Mapped</p>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Upload CSV File</label>
+              <label className="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 cursor-pointer flex items-center justify-center shadow-md">
+                <span>Choose File</span>
+                <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+              </label>
+              <p className="text-xs text-gray-400 mt-1">Upload memory access data (CSV)</p>
+            </div>
+
+            {fileData && (
+              <div className="p-4 bg-gray-50 rounded-lg shadow-inner border border-gray-200 col-span-3 mt-4">
+                <h2 className="text-lg font-semibold text-indigo-700 mb-2">Data Preview</h2>
+                <div className="overflow-y-auto max-h-56 w-full"> {/* ปรับจาก max-h-40 เป็น max-h-56 */}
+                  <table className="min-w-full table-auto border-collapse">
+                    <thead className="bg-gray-100 sticky top-0">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-gray-600">Address (Hex)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {fileData.map((row, index) => (
+                        <tr key={index} className="hover:bg-gray-100 transition-colors">
+                          <td className="px-4 py-2 text-gray-700">{row["Address(Hex)"]}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {fileName ? `File: ${fileName}` : "No data loaded"} | Rows: {fileData.length}
+                </p>
+              </div>
             )}
           </div>
+        </div>
 
-          <div>
-            <label className="block font-semibold text-gray-700 mb-2">Upload CSV File:</label>
-            <label className="w-full p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center justify-center">
-              <span>Choose File</span>
-              <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
-            </label>
-            <p className="text-sm text-gray-500 mt-1">Upload a CSV file containing memory access data.</p>
-          </div>
-
-          {fileData && (
-            <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm">
-              <h2 className="text-lg font-semibold text-blue-700 mb-2">Data Preview:</h2>
-              <div className="overflow-y-scroll max-h-72">
-                <table className="w-full table-auto border-collapse">
-                  <thead>
-                    <tr className="bg-gray-200">
-                      <th className="px-4 py-2 text-left border-b">Address(Hex)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fileData.map((row, index) => (
-                      <tr key={index}>
-                        <td className="px-4 py-2 border-b">{row["Address(Hex)"]}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className="text-sm text-gray-500 mt-2">
-                {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
-              </p>
-            </div>
-          )}
-
-          <div className="mt-6">
-            <button
-              onClick={startSimulation}
-              className="text-2xl w-full p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              Start Simulation
-            </button>
-          </div>
+        {/* Start Simulation Button */}
+        <div className="mt-8">
+          <button
+            onClick={startSimulation}
+            className="w-full p-4 bg-gradient-to-r from-indigo-600 to-blue-500 text-white text-lg font-semibold rounded-lg shadow-lg hover:from-indigo-700 hover:to-blue-600 transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300"
+          >
+            Start Simulation
+          </button>
         </div>
       </div>
     </div>
