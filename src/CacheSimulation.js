@@ -3,35 +3,24 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Papa from "papaparse";
 
 const CacheSimulation = () => {
-  const [memorySize, setMemorySize] = useState(64); // ในหน่วย MB
-  const [cacheSize, setCacheSize] = useState(1); // ในหน่วย KB
-  const [blockSize, setBlockSize] = useState(16); // ในหน่วย B
+  const [memorySize, setMemorySize] = useState(64);
+  const [cacheSize, setCacheSize] = useState(1);
+  const [blockSize, setBlockSize] = useState(16);
   const [replacementPolicy, setReplacementPolicy] = useState("LRU");
   const [fileData, setFileData] = useState(null);
   const [fileName, setFileName] = useState("");
   const [mappingTechnique, setMappingTechnique] = useState("directMapped");
-  const [associativity, setAssociativity] = useState(2); // สำหรับ Set-Associative Cache
-  const [addressSize, setAddressSize] = useState(32); // ในหน่วย bits
+  const [associativity, setAssociativity] = useState(2);
+  const [addressSize, setAddressSize] = useState(32);
   const [error, setError] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
 
-  // รับค่าสถานะที่ส่งกลับมาและอัปเดต state
   useEffect(() => {
     if (location.state) {
-      const {
-        memorySize,
-        cacheSize,
-        blockSize,
-        replacementPolicy,
-        fileData,
-        fileName,
-        mappingTechnique,
-        associativity,
-        addressSize,
-      } = location.state;
-
+      const { memorySize, cacheSize, blockSize, replacementPolicy, fileData, fileName, mappingTechnique, associativity, addressSize } =
+        location.state;
       setMemorySize(memorySize);
       setCacheSize(cacheSize);
       setBlockSize(blockSize);
@@ -50,7 +39,6 @@ const CacheSimulation = () => {
       setError("No file selected.");
       return;
     }
-
     if (!file.name.endsWith(".csv")) {
       setError("Please upload a valid CSV file.");
       return;
@@ -59,7 +47,6 @@ const CacheSimulation = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target.result;
-
       const result = Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
@@ -70,12 +57,10 @@ const CacheSimulation = () => {
             console.error("Parsing Errors:", parsedResult.errors);
             return;
           }
-
           if (!parsedResult.data || parsedResult.data.length === 0) {
             setError("CSV file is empty or has incorrect format.");
             return;
           }
-
           setFileData(parsedResult.data);
           setFileName(file.name);
           setError("");
@@ -83,7 +68,6 @@ const CacheSimulation = () => {
         delimiter: ",",
       });
     };
-
     reader.readAsText(file, "UTF-8");
   };
 
@@ -92,27 +76,22 @@ const CacheSimulation = () => {
       setError("Please use sample data or upload a valid CSV file before starting the simulation.");
       return;
     }
-
     if (isNaN(memorySize) || memorySize <= 0 || memorySize > 1024) {
       setError("Memory Size must be greater than 0 and less than or equal to 1024 MB.");
       return;
     }
-
     if (isNaN(cacheSize) || cacheSize <= 0 || cacheSize > 256) {
       setError("Cache Size must be greater than 0 and less than or equal to 256 KB.");
       return;
     }
-
-    if (isNaN(blockSize) || blockSize <= 0 || blockSize > 64 * 1024) {
-      setError("Block Size must be greater than 0 and less than or equal to 64 KB.");
+    if (isNaN(blockSize) || blockSize <= 0 || blockSize > 64 * 1024 || (blockSize & (blockSize - 1)) !== 0) {
+      setError("Block Size must be a positive power of 2 and less than or equal to 64 KB.");
       return;
     }
-
     if (mappingTechnique === "setAssociative" && (isNaN(associativity) || associativity <= 0)) {
       setError("Associativity must be greater than 0 for Set-Associative Cache.");
       return;
     }
-
     const blockSizeKB = blockSize / 1024;
     if (cacheSize < blockSizeKB) {
       setError("Cache Size must be greater than or equal to Block Size.");
@@ -153,15 +132,11 @@ const CacheSimulation = () => {
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg border border-gray-200">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-semibold text-blue-700 mb-2">Cache Mapping Simulation</h1>
-          <p className="text-md text-gray-500">
-            Select a cache mapping technique and upload memory access data to analyze cache performance.
-          </p>
+          <p className="text-md text-gray-500">Select a cache mapping technique and upload memory access data to analyze cache performance.</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {error}
-          </div>
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">{error}</div>
         )}
 
         <div className="space-y-6">
@@ -195,7 +170,7 @@ const CacheSimulation = () => {
               <option value={128}>128 KB</option>
               <option value={256}>256 KB</option>
             </select>
-            <p className="text-sm text-gray-500 mt-1">Cache Size must be between 2 and 256 KB.</p>
+            <p className="text-sm text-gray-500 mt-1">Cache Size must be between 1 and 256 KB.</p>
           </div>
 
           <div>
@@ -214,7 +189,7 @@ const CacheSimulation = () => {
               <option value={128}>128 B</option>
               <option value={256}>256 B</option>
             </select>
-            <p className="text-sm text-gray-500 mt-1">Block Size must be between 2 and 256 B.</p>
+            <p className="text-sm text-gray-500 mt-1">Block Size must be a power of 2 between 2 and 256 B.</p>
           </div>
 
           <div>
@@ -257,17 +232,16 @@ const CacheSimulation = () => {
                 <option value={8}>8-way</option>
                 <option value={16}>16-way</option>
               </select>
-              <p className="text-sm text-gray-500 mt-1">
-                Associativity is only applicable for Set-Associative Cache.
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Associativity is only applicable for Set-Associative Cache.</p>
             </div>
           )}
 
           <div>
             <label className="block font-semibold text-gray-700 mb-2">Replacement Policy:</label>
             <select
-              className={`w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 ${mappingTechnique === "directMapped" ? "bg-gray-200 cursor-not-allowed" : "bg-white"
-                }`}
+              className={`w-full p-4 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                mappingTechnique === "directMapped" ? "bg-gray-200 cursor-not-allowed" : "bg-white"
+              }`}
               value={replacementPolicy}
               onChange={(e) => setReplacementPolicy(e.target.value)}
               disabled={mappingTechnique === "directMapped"}
@@ -277,9 +251,7 @@ const CacheSimulation = () => {
               <option value="Random">Random</option>
             </select>
             {mappingTechnique === "directMapped" && (
-              <p className="text-sm text-gray-500 mt-1">
-                Replacement Policy is not applicable for Direct Mapped Cache.
-              </p>
+              <p className="text-sm text-gray-500 mt-1">Replacement Policy is not applicable for Direct Mapped Cache.</p>
             )}
           </div>
 
@@ -287,12 +259,7 @@ const CacheSimulation = () => {
             <label className="block font-semibold text-gray-700 mb-2">Upload CSV File:</label>
             <label className="w-full p-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center justify-center">
               <span>Choose File</span>
-              <input
-                type="file"
-                accept=".csv"
-                className="hidden"
-                onChange={handleFileUpload}
-              />
+              <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
             </label>
             <p className="text-sm text-gray-500 mt-1">Upload a CSV file containing memory access data.</p>
           </div>
@@ -316,7 +283,6 @@ const CacheSimulation = () => {
                   </tbody>
                 </table>
               </div>
-              {/* เพิ่มบรรทัดนี้เพื่อแสดงจำนวนแถว */}
               <p className="text-sm text-gray-500 mt-2">
                 {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
               </p>
