@@ -128,11 +128,8 @@ const CacheResults_Direct = () => {
     [cacheSize, blockSize, fileData, addressSize]
   );
 
-  // Bar Chart: Cache Access Results with Percentage
+  // Bar Chart: Cache Access Results with Correct Percentage
   const totalAccesses = hits + misses;
-  const hitPercentage = totalAccesses > 0 ? (hits / totalAccesses) * 100 : 0;
-  const missPercentage = totalAccesses > 0 ? (misses / totalAccesses) * 100 : 0;
-
   const barChartData = {
     labels: ["Hits", "Misses"],
     datasets: [
@@ -268,15 +265,16 @@ const CacheResults_Direct = () => {
           label: (context) => {
             const label = context.dataset.label || "";
             const value = context.parsed.y;
-            if (context.datasetIndex === 0 && context.chart.canvas.id === "cacheAccessChart") {
-              const percentage = context.dataIndex === 0 ? hitPercentage : missPercentage;
-              return `${label}: ${value} (${percentage.toFixed(2)}%)`;
+            const total = hits + misses;
+            const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : "0.00";
+            if (context.chart.canvas.id === "cacheAccessChart") {
+              return `${label}: ${value} (${percentage}%)`;
             }
-            if (context.datasetIndex === 0 && context.chart.canvas.id === "conflictChart") {
-              const percentage = sortedIndices[context.dataIndex].percentage;
-              return `${label}: ${value} (${percentage.toFixed(2)}%)`;
+            if (context.chart.canvas.id === "conflictChart") {
+              const conflictPercentage = sortedIndices[context.dataIndex].percentage.toFixed(2);
+              return `${label}: ${value} (${conflictPercentage}%)`;
             }
-            return `${label}: ${value.toFixed(2)}`;
+            return `${label}: ${value.toFixed(2)}%`;
           },
         },
       },
@@ -286,8 +284,44 @@ const CacheResults_Direct = () => {
         beginAtZero: true,
         title: {
           display: true,
-          text: "Value",
+          text: "Count",
         },
+      },
+      x: {
+        title: {
+          display: true,
+          text: "Category",
+        },
+      },
+    },
+  };
+
+  const lineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: "top" },
+      title: { display: true },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const label = context.dataset.label || "";
+            const value = context.parsed.y;
+            return `${label}: ${value.toFixed(2)}%`;
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: "Rate (%)",
+        },
+        min: 0,
+        max: 100,
+        ticks: { stepSize: 10 },
       },
       x: {
         title: {
@@ -348,7 +382,10 @@ const CacheResults_Direct = () => {
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Miss Rate vs Block Size:</h2>
             <div className="h-80">
-              <Line data={lineChartData} options={{ ...chartOptions, scales: { y: { title: { text: "Miss Rate (%)" } }, x: { title: { text: "Block Size (B)" } } } }} />
+              <Line
+                data={lineChartData}
+                options={{ ...lineChartOptions, scales: { y: { title: { text: "Miss Rate (%)" } }, x: { title: { text: "Block Size (B)" } } } }}
+              />
             </div>
             <p className="text-sm text-gray-500 mt-2">Shows how miss rate varies with different block sizes</p>
           </div>
@@ -357,7 +394,10 @@ const CacheResults_Direct = () => {
           <div>
             <h2 className="text-xl font-semibold text-blue-700 mb-2">Hit Rate vs Cache Size:</h2>
             <div className="h-80">
-              <Line data={hitRateChartData} options={{ ...chartOptions, scales: { y: { title: { text: "Hit Rate (%)" } }, x: { title: { text: "Cache Size (KB)" } } } }} />
+              <Line
+                data={hitRateChartData}
+                options={{ ...lineChartOptions, scales: { y: { title: { text: "Hit Rate (%)" } }, x: { title: { text: "Cache Size (KB)" } } } }}
+              />
             </div>
             <p className="text-sm text-gray-500 mt-2">Shows how hit rate changes with varying cache sizes</p>
           </div>
@@ -383,7 +423,7 @@ const CacheResults_Direct = () => {
             <Line
               data={accessPatternChartData}
               options={{
-                ...chartOptions,
+                ...lineChartOptions,
                 scales: {
                   y: { title: { text: "Rate (%)" }, min: 0, max: 100 },
                   x: { title: { text: "Access Interval" } },
