@@ -280,30 +280,7 @@ const CacheSimulation = () => {
               <p className="text-xs text-gray-400 mt-1">Upload memory access data (CSV)</p>
             </div>
 
-            {fileData && (
-              <div className="p-4 bg-gray-50 rounded-lg shadow-inner border border-gray-200 col-span-3 mt-4">
-                <h2 className="text-lg font-semibold text-indigo-700 mb-2">Data Preview</h2>
-                <div className="overflow-y-auto max-h-56 w-full"> {/* ปรับจาก max-h-40 เป็น max-h-56 */}
-                  <table className="min-w-full table-auto border-collapse">
-                    <thead className="bg-gray-100 sticky top-0">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-gray-600">Address (Hex)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {fileData.map((row, index) => (
-                        <tr key={index} className="hover:bg-gray-100 transition-colors">
-                          <td className="px-4 py-2 text-gray-700">{row["Address(Hex)"]}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  {fileName ? `File: ${fileName}` : "No data loaded"} | Rows: {fileData.length}
-                </p>
-              </div>
-            )}
+            
           </div>
         </div>
 

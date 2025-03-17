@@ -561,36 +561,7 @@ const CacheResults_Fully = () => {
             </p>
           </div>
 
-          {fileData && (
-            <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm col-span-2">
-              <h2 className="text-lg font-semibold text-blue-700 mb-2">
-                Data Preview:
-              </h2>
-              <div className="overflow-y-scroll max-h-72">
-                <table className="w-full table-auto border-collapse">
-                  <thead>
-                    <tr className="bg-gray-200">
-                      <th className="px-4 py-2 text-left border-b">
-                        Address(Hex)
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fileData.map((row, index) => (
-                      <tr key={index}>
-                        <td className="px-4 py-2 border-b">
-                          {row["Address(Hex)"]}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className="text-sm text-gray-500 mt-2">
-                {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
-              </p>
-            </div>
-          )}
+         
         </div>
 
         <div className="mt-6 text-center">
