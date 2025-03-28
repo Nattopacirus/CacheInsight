@@ -96,7 +96,7 @@ const CacheSimulation = () => {
       setError("Cache Size must be greater than or equal to Block Size.");
       return;
     }
-  
+
     // เพิ่มการตรวจสอบสำหรับ Set-Associative Cache
     if (mappingTechnique === "setAssociative") {
       const cacheSizeBytes = cacheSize * 1024;
@@ -108,9 +108,9 @@ const CacheSimulation = () => {
         return;
       }
     }
-  
+
     setError("");
-  
+
     const state = {
       memorySize: Math.floor(memorySize),
       cacheSize: Math.floor(cacheSize),
@@ -122,7 +122,7 @@ const CacheSimulation = () => {
       associativity: Math.floor(associativity),
       addressSize: Math.floor(addressSize),
     };
-  
+
     switch (mappingTechnique) {
       case "directMapped":
         navigate("/results_direct", { state });
@@ -139,7 +139,7 @@ const CacheSimulation = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 flex items-center justify-center p-6">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 p-6 items-center justify-center">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl p-8 transform transition-all hover:shadow-3xl flex flex-col">
         {/* Header */}
         <div className="text-center mb-6">
@@ -317,6 +317,16 @@ const CacheSimulation = () => {
           </button>
         </div>
       </div>
+
+      {/* Footer - Centered Below */}
+      <div className="mt-12 w-full text-center text-gray-500 text-sm">
+        <p>© {new Date().getFullYear()} Cache Insight. All rights reserved.</p>
+        <p className="mt-1">
+          Built with for memory performance analysis.
+          <a href="https://github.com/Nattopacirus/CacheInsight.git" className="text-indigo-600 hover:underline ml-1">Learn more</a>
+        </p>
+      </div>
+
     </div>
   );
 };
