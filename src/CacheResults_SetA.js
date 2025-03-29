@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useState,useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Bar, Line } from "react-chartjs-2";
 import {
@@ -208,9 +208,24 @@ const CacheResults_SetA = () => {
     const { cacheSize, blockSize, fileData, fileName, replacementPolicy, memorySize, mappingTechnique, associativity, addressSize } =
         location.state || {};
 
+    const [showAllData, setShowAllData] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
+
+    const handleShowAll = () => {
+        if (!showAllData && fileData.length > 1000) {
+            setIsLoading(true);
+            setTimeout(() => {
+                setShowAllData(true);
+                setIsLoading(false);
+            }, 100);
+        } else {
+            setShowAllData(!showAllData);
+        }
+    };
 
     const handleBack = () => {
         navigate("/", {
@@ -651,28 +666,56 @@ const CacheResults_SetA = () => {
                         </p>
                     </div>
 
+                    {/*Show Sample Data file*/}
                     {fileData && (
                         <div className="mt-4 p-4 bg-gray-50 border border-gray-300 rounded-lg shadow-sm col-span-2">
-                            <h2 className="text-lg font-semibold text-blue-700 mb-2">Data Preview:</h2>
+                            <div className="flex justify-between items-center mb-2">
+                                <h2 className="text-lg font-semibold text-blue-700">
+                                    Data Preview {showAllData ? '' : '(First 5 Rows)'}
+                                </h2>
+                                {fileData.length > 5 && (
+                                    <button
+                                        onClick={handleShowAll}
+                                        className="text-sm text-blue-600 hover:text-blue-800"
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? 'Loading...' : showAllData ? 'Show Less' : 'Show All'}
+                                    </button>
+                                )}
+                            </div>
+
                             <div className="overflow-y-scroll max-h-72">
                                 <table className="w-full table-auto border-collapse">
                                     <thead>
                                         <tr className="bg-gray-200">
-                                            <th className="px-4 py-2 text-left border-b">Address(Hex)</th>
+                                            <th className="px-4 py-2 text-left border-b">#</th>
+                                            <th className="px-4 py-2 text-left border-b">Address (Hex)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {fileData.map((row, index) => (
+                                        {(showAllData ? fileData : fileData.slice(0, 5)).map((row, index) => (
                                             <tr key={index}>
-                                                <td className="px-4 py-2 border-b">{row["Address(Hex)"]}</td>
+                                                <td className="px-4 py-2 border-b">{index + 1}</td>
+                                                <td className="px-4 py-2 border-b font-mono">{row["Address(Hex)"]}</td>
                                             </tr>
                                         ))}
                                     </tbody>
                                 </table>
                             </div>
-                            <p className="text-sm text-gray-500 mt-2">
-                                {fileName ? `File: ${fileName}` : "No data loaded"} | Total Rows: {fileData.length}
-                            </p>
+
+                            <div className="mt-2 text-sm text-gray-500">
+                                <p>
+                                    {fileName ? `File: ${fileName}` : "No data loaded"} |
+                                    Showing {showAllData ? fileData.length : Math.min(5, fileData.length)} of {fileData.length} rows
+                                </p>
+                                {fileData.length > 1000 && (
+                                    <p className="text-yellow-600">
+                                        Note: Processing large files may take longer.
+                                    </p>
+                                )}
+                            </div>
+
+                            
                         </div>
                     )}
                 </div>

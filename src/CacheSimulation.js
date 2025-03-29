@@ -13,6 +13,11 @@ const CacheSimulation = () => {
   const [associativity, setAssociativity] = useState(2);
   const [addressSize, setAddressSize] = useState(32);
   const [error, setError] = useState("");
+  // เพิ่ม state สำหรับควบคุมการแสดงผล
+  const [showAllData, setShowAllData] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  // เพิ่ม state สำหรับควบคุมการแสดงคำอธิบาย
+  const [showFileFormatHelp, setShowFileFormatHelp] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,6 +36,18 @@ const CacheSimulation = () => {
       setAddressSize(addressSize);
     }
   }, [location.state]);
+
+  const handleShowAll = () => {
+    if (!showAllData && fileData.length > 1000) {
+      setIsLoading(true);
+      setTimeout(() => {
+        setShowAllData(true);
+        setIsLoading(false);
+      }, 100);
+    } else {
+      setShowAllData(!showAllData);
+    }
+  };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -205,6 +222,8 @@ const CacheSimulation = () => {
             </div>
           </div>
 
+
+
           {/* Middle Column */}
           <div className="space-y-4">
             <div>
@@ -267,7 +286,48 @@ const CacheSimulation = () => {
                 <p className="text-xs text-gray-400 mt-1">Not applicable for Direct Mapped</p>
               )}
             </div>
+
+            {/* In the Right Column section (after the Upload CSV File section), add: */}
+            <div className="space-y-4">
+              {/* Existing Upload CSV File section... */}
+
+              {/* Add button and file format description */}
+              <div className="text-center">
+                <button
+                  onClick={() => setShowFileFormatHelp(!showFileFormatHelp)}
+                  className="text-sm text-indigo-600 hover:text-indigo-800 underline"
+                >
+                  {showFileFormatHelp ? 'Hide CSV File Format Help' : 'What csv file format should I use?'}
+                </button>
+
+                {showFileFormatHelp && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
+                    <h3 className="font-semibold text-blue-800">CSV File Format Requirements:</h3>
+                    <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1 mt-1">
+                      <li>The file must be in the <span className="font-mono">.csv</span> format</li>
+                      <li>It must have a column header named <span className="font-mono">Address(Hex)</span> (case-sensitive)</li>
+                      <li>Each row represents one memory access</li>
+                      <li>Supports Hexadecimal Address format (e.g. <span className="font-mono">0x00000000</span>)</li>
+                      <li>Additional columns can be included, but only the <span className="font-mono">Address(Hex)</span> column will be used</li>
+                    </ul>
+
+                    <h3 className="font-semibold text-blue-800 mt-2">Example CSV Content:</h3>
+                    <div className="bg-gray-100 p-2 rounded font-mono text-sm">
+                      <div className="whitespace-pre">Address(Hex)
+                        <div>0x00000000</div>
+                        <div>0x00000004</div>
+                        <div>0x00000008</div>
+                        <div>0x0000000C</div>
+                        <div>0x00000010</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
+
+
 
           {/* Right Column */}
           <div className="space-y-4">
@@ -278,30 +338,60 @@ const CacheSimulation = () => {
                 <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
               </label>
               <p className="text-xs text-gray-400 mt-1">Upload memory access data (CSV)</p>
+              <p className="text-xs text-gray-500 mt-2">
+                <strong>Note:</strong> The system can accept CSV files with an unlimited number of address entries (rows), depending on the browser's capability and the user's computer performance.
+              </p>
             </div>
 
             {fileData && (
               <div className="p-4 bg-gray-50 rounded-lg shadow-inner border border-gray-200 col-span-3 mt-4">
-                <h2 className="text-lg font-semibold text-indigo-700 mb-2">Data Preview</h2>
-                <div className="overflow-y-auto max-h-56 w-full"> {/* ปรับจาก max-h-40 เป็น max-h-56 */}
+                <div className="flex justify-between items-center mb-2">
+                  <h2 className="text-lg font-semibold text-indigo-700">
+                    Data Preview {showAllData ? '' : '(First 5 Rows)'}
+                  </h2>
+                  {fileData.length > 5 && (
+                    <button
+                      onClick={handleShowAll}
+                      className="text-sm text-indigo-600 hover:text-indigo-800"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Loading...' : showAllData ? 'Show Less' : 'Show All'}
+                    </button>
+                  )}
+                </div>
+
+                <div className="overflow-y-auto max-h-56 w-full">
                   <table className="min-w-full table-auto border-collapse">
                     <thead className="bg-gray-100 sticky top-0">
                       <tr>
+                        <th className="px-4 py-2 text-left text-gray-600">#</th>
                         <th className="px-4 py-2 text-left text-gray-600">Address (Hex)</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {fileData.map((row, index) => (
+                      {(showAllData ? fileData : fileData.slice(0, 5)).map((row, index) => (
                         <tr key={index} className="hover:bg-gray-100 transition-colors">
-                          <td className="px-4 py-2 text-gray-700">{row["Address(Hex)"]}</td>
+                          <td className="px-4 py-2 text-gray-700">{index + 1}</td>
+                          <td className="px-4 py-2 text-gray-700 font-mono">{row["Address(Hex)"]}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  {fileName ? `File: ${fileName}` : "No data loaded"} | Rows: {fileData.length}
-                </p>
+
+                <div className="mt-3 text-xs text-gray-500">
+                  <p>
+                    {fileName ? `File: ${fileName}` : "No data loaded"} |
+                    Showing {showAllData ? fileData.length : Math.min(5, fileData.length)} of {fileData.length} rows
+                  </p>
+                  {fileData.length > 1000 && (
+                    <p className="text-yellow-600 mt-1">
+                      Note: Large file detected. Showing all data may affect performance.
+                    </p>
+                  )}
+                </div>
+
+                
               </div>
             )}
           </div>
