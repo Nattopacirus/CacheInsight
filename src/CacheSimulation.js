@@ -156,244 +156,230 @@ const CacheSimulation = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 p-6 items-center justify-center">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl p-8 transform transition-all hover:shadow-3xl flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-50 via-blue-50 to-purple-50 p-4 md:p-6 items-center justify-center">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-6xl p-6 md:p-8 transform transition-all hover:shadow-3xl flex flex-col">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold text-indigo-700 bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-bold text-indigo-700 bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">
             Cache Insight
           </h1>
-          <h2 className="text-xl font-medium text-gray-600 mt-2">Simulation & Analysis of Memory Access</h2>
-          <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-            Dive into cache performance with custom simulations. Upload your data and optimize with ease.
-          </p>
+          <h2 className="text-lg md:text-xl font-medium text-gray-600 mt-2">Simulation & Analysis of Memory Access</h2>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg animate-fade-in">
-            {error}
+          <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg animate-fade-in">
+            <p className="font-medium">Error:</p>
+            <p>{error}</p>
           </div>
         )}
 
-        {/* Form - Horizontal Layout */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* Left Column */}
+        {/* Form - Adjusted Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Cache Parameters */}
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Memory Size (MB)</label>
-              <input
-                type="number"
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
-                value={memorySize}
-                onChange={(e) => setMemorySize(Math.max(0, Math.min(1024, e.target.value)))}
-                min="0"
-                max="1024"
-              />
-              <p className="text-xs text-gray-400 mt-1">0-1024 MB</p>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h3 className="font-semibold text-gray-800 mb-3">Memory Parameters</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Memory Size (MB)</label>
+                  <input
+                    type="number"
+                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    value={memorySize}
+                    onChange={(e) => setMemorySize(Math.max(0, Math.min(1024, e.target.value)))}
+                    min="0"
+                    max="1024"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Range: 0-1024 MB</p>
+                  <p className="text-xs text-gray-500 mt-1">This value is used only to calculate the address range, it does not directly affect the Hit/Miss rate.</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Address Size (bits)</label>
+                  <select
+                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    value={addressSize}
+                    onChange={(e) => setAddressSize(parseInt(e.target.value))}
+                  >
+                    {[16, 32, 64].map((size) => (
+                      <option key={size} value={size}>{size} bits</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Cache Size (KB)</label>
-              <select
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
-                value={cacheSize}
-                onChange={(e) => setCacheSize(parseInt(e.target.value))}
-              >
-                {[1, 2, 4, 8, 16, 32, 64, 128, 256].map((size) => (
-                  <option key={size} value={size}>{size} KB</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-400 mt-1">1-256 KB</p>
-            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h3 className="font-semibold text-gray-800 mb-3">Cache Parameters</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Cache Size (KB)</label>
+                  <select
+                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    value={cacheSize}
+                    onChange={(e) => setCacheSize(parseInt(e.target.value))}
+                  >
+                    {[1, 2, 4, 8, 16, 32, 64, 128, 256].map((size) => (
+                      <option key={size} value={size}>{size} KB</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Range: 1-256 KB</p>
+                </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Block Size (B)</label>
-              <select
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
-                value={blockSize}
-                onChange={(e) => setBlockSize(parseInt(e.target.value))}
-              >
-                {[2, 4, 8, 16, 32, 64, 128, 256].map((size) => (
-                  <option key={size} value={size}>{size} B</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-400 mt-1">Power of 2, up to 256 B</p>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Block Size (B)</label>
+                  <select
+                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    value={blockSize}
+                    onChange={(e) => setBlockSize(parseInt(e.target.value))}
+                  >
+                    {[2, 4, 8, 16, 32, 64, 128, 256].map((size) => (
+                      <option key={size} value={size}>{size} B</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Power of 2, up to 256 B</p>
+                </div>
+              </div>
             </div>
           </div>
 
-
-
-          {/* Middle Column */}
+          {/* Middle Column - Mapping & Policy */}
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Cache Mapping Technique</label>
-              <select
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
-                value={mappingTechnique}
-                onChange={(e) => setMappingTechnique(e.target.value)}
-              >
-                <option value="directMapped">Direct Mapped</option>
-                <option value="setAssociative">Set-Associative</option>
-                <option value="fullyAssociative">Fully Associative</option>
-              </select>
-            </div>
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h3 className="font-semibold text-gray-800 mb-3">Mapping Technique</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Mapping Type</label>
+                  <select
+                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    value={mappingTechnique}
+                    onChange={(e) => setMappingTechnique(e.target.value)}
+                  >
+                    <option value="directMapped">Direct Mapped</option>
+                    <option value="setAssociative">Set-Associative</option>
+                    <option value="fullyAssociative">Fully Associative</option>
+                  </select>
+                </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Address Size (bits)</label>
-              <select
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
-                value={addressSize}
-                onChange={(e) => setAddressSize(parseInt(e.target.value))}
-              >
-                {[16, 32, 64].map((size) => (
-                  <option key={size} value={size}>{size} bits</option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-400 mt-1">Select address size</p>
-            </div>
+                {mappingTechnique === "setAssociative" && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Associativity</label>
+                    <select
+                      className="w-full p-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                      value={associativity}
+                      onChange={(e) => setAssociativity(parseInt(e.target.value))}
+                    >
+                      {[2, 4, 8, 16].map((level) => (
+                        <option key={level} value={level}>{level}-way</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-            {mappingTechnique === "setAssociative" && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Associativity</label>
-                <select
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none"
-                  value={associativity}
-                  onChange={(e) => setAssociativity(parseInt(e.target.value))}
-                >
-                  {[2, 4, 8, 16].map((level) => (
-                    <option key={level} value={level}>{level}-way</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-400 mt-1">For Set-Associative only</p>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Replacement Policy</label>
+                  <select
+                    className={`w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all ${mappingTechnique === "directMapped" ? "bg-gray-100 cursor-not-allowed" : "bg-white"
+                      }`}
+                    value={replacementPolicy}
+                    onChange={(e) => setReplacementPolicy(e.target.value)}
+                    disabled={mappingTechnique === "directMapped"}
+                  >
+                    <option value="LRU">Least Recently Used (LRU)</option>
+                    <option value="FIFO">First In First Out (FIFO)</option>
+                    <option value="Random">Random</option>
+                  </select>
+                  {mappingTechnique === "directMapped" && (
+                    <p className="text-xs text-gray-500 mt-1">Not applicable for Direct Mapped</p>
+                  )}
+                </div>
               </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Replacement Policy</label>
-              <select
-                className={`w-full p-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 appearance-none ${mappingTechnique === "directMapped" ? "bg-gray-200 cursor-not-allowed" : "bg-gray-50"
-                  }`}
-                value={replacementPolicy}
-                onChange={(e) => setReplacementPolicy(e.target.value)}
-                disabled={mappingTechnique === "directMapped"}
-              >
-                <option value="LRU">Least Recently Used (LRU)</option>
-                <option value="FIFO">First In First Out (FIFO)</option>
-                <option value="Random">Random</option>
-              </select>
-              {mappingTechnique === "directMapped" && (
-                <p className="text-xs text-gray-400 mt-1">Not applicable for Direct Mapped</p>
-              )}
             </div>
+          </div>
 
-            {/* In the Right Column section (after the Upload CSV File section), add: */}
-            <div className="space-y-4">
-              {/* Existing Upload CSV File section... */}
+          {/* Right Column - Data Input */}
+          <div className="space-y-4">
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h3 className="font-semibold text-gray-800 mb-3">Data Input</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Upload Memory Access Data</label>
+                  <label className="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 cursor-pointer flex items-center justify-center shadow-md">
+                    <span>Choose CSV File</span>
+                    <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">Supports CSV files with Address(Hex) column</p>
 
-              {/* Add button and file format description */}
-              <div className="text-center">
-                <button
-                  onClick={() => setShowFileFormatHelp(!showFileFormatHelp)}
-                  className="text-sm text-indigo-600 hover:text-indigo-800 underline"
-                >
-                  {showFileFormatHelp ? 'Hide CSV File Format Help' : 'What csv file format should I use?'}
-                </button>
+                  <button
+                    onClick={() => setShowFileFormatHelp(!showFileFormatHelp)}
+                    className="mt-2 text-xs text-indigo-600 hover:text-indigo-800 underline"
+                  >
+                    {showFileFormatHelp ? 'Hide Format Details' : 'Show File Format Requirements'}
+                  </button>
 
-                {showFileFormatHelp && (
-                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
-                    <h3 className="font-semibold text-blue-800">CSV File Format Requirements:</h3>
-                    <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1 mt-1">
-                      <li>The file must be in the <span className="font-mono">.csv</span> format</li>
-                      <li>It must have a column header named <span className="font-mono">Address(Hex)</span> (case-sensitive)</li>
-                      <li>Each row represents one memory access</li>
-                      <li>Supports Hexadecimal Address format (e.g. <span className="font-mono">0x00000000</span>)</li>
-                      <li>Additional columns can be included, but only the <span className="font-mono">Address(Hex)</span> column will be used</li>
-                    </ul>
-
-                    <h3 className="font-semibold text-blue-800 mt-2">Example CSV Content:</h3>
-                    <div className="bg-gray-100 p-2 rounded font-mono text-sm">
-                      <div className="whitespace-pre">Address(Hex)
+                  {showFileFormatHelp && (
+                    <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-medium text-blue-800 text-sm">CSV File Requirements:</h4>
+                      <ul className="list-disc pl-5 text-xs text-gray-700 space-y-1 mt-1">
+                        <li>Must contain <span className="font-mono">Address(Hex)</span> column</li>
+                        <li>Hexadecimal format (e.g. <span className="font-mono">0x00000000</span>)</li>
+                        <li>One memory access per row</li>
+                      </ul>
+                      <div className="mt-2 bg-gray-100 p-2 rounded font-mono text-xs">
+                        <div>Address(Hex)</div>
                         <div>0x00000000</div>
                         <div>0x00000004</div>
                         <div>0x00000008</div>
-                        <div>0x0000000C</div>
-                        <div>0x00000010</div>
                       </div>
+                    </div>
+                  )}
+                </div>
+
+                {fileData && (
+                  <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="bg-gray-100 px-4 py-2 flex justify-between items-center">
+                      <h4 className="font-medium text-gray-800">
+                        Data Preview {showAllData ? '' : '(First 5 Rows)'}
+                      </h4>
+                      {fileData.length > 5 && (
+                        <button
+                          onClick={handleShowAll}
+                          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                          disabled={isLoading}
+                        >
+                          {isLoading ? 'Loading...' : showAllData ? 'Show Less' : 'Show All'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="overflow-y-auto max-h-60">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">#</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Address (Hex)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {(showAllData ? fileData : fileData.slice(0, 5)).map((row, index) => (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="px-3 py-2 text-sm text-gray-700">{index + 1}</td>
+                              <td className="px-3 py-2 text-sm font-mono text-gray-900">{row["Address(Hex)"]}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="bg-gray-50 px-4 py-2 text-xs text-gray-500 border-t border-gray-200">
+                      {fileName} | Showing {showAllData ? fileData.length : Math.min(5, fileData.length)} of {fileData.length} rows
+                      {fileData.length > 1000 && (
+                        <span className="ml-2 text-yellow-600">Large file - may affect performance</span>
+                      )}
                     </div>
                   </div>
                 )}
               </div>
             </div>
-          </div>
-
-
-
-          {/* Right Column */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Upload CSV File</label>
-              <label className="w-full p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 cursor-pointer flex items-center justify-center shadow-md">
-                <span>Choose File</span>
-                <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
-              </label>
-              <p className="text-xs text-gray-400 mt-1">Upload memory access data (CSV)</p>
-              <p className="text-xs text-gray-500 mt-2">
-                <strong>Note:</strong> The system can accept CSV files with an unlimited number of address entries (rows), depending on the browser's capability and the user's computer performance.
-              </p>
-            </div>
-
-            {fileData && (
-              <div className="p-4 bg-gray-50 rounded-lg shadow-inner border border-gray-200 col-span-3 mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h2 className="text-lg font-semibold text-indigo-700">
-                    Data Preview {showAllData ? '' : '(First 5 Rows)'}
-                  </h2>
-                  {fileData.length > 5 && (
-                    <button
-                      onClick={handleShowAll}
-                      className="text-sm text-indigo-600 hover:text-indigo-800"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Loading...' : showAllData ? 'Show Less' : 'Show All'}
-                    </button>
-                  )}
-                </div>
-
-                <div className="overflow-y-auto max-h-56 w-full">
-                  <table className="min-w-full table-auto border-collapse">
-                    <thead className="bg-gray-100 sticky top-0">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-gray-600">#</th>
-                        <th className="px-4 py-2 text-left text-gray-600">Address (Hex)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(showAllData ? fileData : fileData.slice(0, 5)).map((row, index) => (
-                        <tr key={index} className="hover:bg-gray-100 transition-colors">
-                          <td className="px-4 py-2 text-gray-700">{index + 1}</td>
-                          <td className="px-4 py-2 text-gray-700 font-mono">{row["Address(Hex)"]}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="mt-3 text-xs text-gray-500">
-                  <p>
-                    {fileName ? `File: ${fileName}` : "No data loaded"} |
-                    Showing {showAllData ? fileData.length : Math.min(5, fileData.length)} of {fileData.length} rows
-                  </p>
-                  {fileData.length > 1000 && (
-                    <p className="text-yellow-600 mt-1">
-                      Note: Large file detected. Showing all data may affect performance.
-                    </p>
-                  )}
-                </div>
-
-                
-              </div>
-            )}
           </div>
         </div>
 
@@ -401,22 +387,24 @@ const CacheSimulation = () => {
         <div className="mt-8">
           <button
             onClick={startSimulation}
-            className="w-full p-4 bg-gradient-to-r from-indigo-600 to-blue-500 text-white text-lg font-semibold rounded-lg shadow-lg hover:from-indigo-700 hover:to-blue-600 transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300"
+            className="w-full p-3 bg-gradient-to-r from-indigo-600 to-blue-500 text-white font-semibold rounded-lg shadow-md hover:from-indigo-700 hover:to-blue-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            disabled={!fileData}
           >
             Start Simulation
           </button>
         </div>
-      </div>
 
-      {/* Footer - Centered Below */}
-      <div className="mt-12 w-full text-center text-gray-500 text-sm">
-        <p>© {new Date().getFullYear()} Cache Insight. All rights reserved.</p>
-        <p className="mt-1">
-          Built with for memory performance analysis.
-          <a href="https://github.com/Nattopacirus/CacheInsight.git" className="text-indigo-600 hover:underline ml-1" target="blank">Learn more</a>
-        </p>
+        {/* Footer */}
+        <div className="mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-500">
+          <p>© {new Date().getFullYear()} Cache Insight. All rights reserved.</p>
+          <p className="mt-1">
+            Built with for memory performance analysis.
+            <a href="https://github.com/Nattopacirus/CacheInsight.git" className="text-indigo-600 hover:underline ml-1" target="_blank" rel="noopener noreferrer">
+              Learn more
+            </a>
+          </p>
+        </div>
       </div>
-
     </div>
   );
 };
