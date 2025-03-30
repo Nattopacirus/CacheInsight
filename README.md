@@ -1,71 +1,70 @@
 # Cache Insight: Simulation & Analysis of Memory Access
 
-🚀 **เครื่องมือจำลองและวิเคราะห์การเข้าถึงหน่วยความจำด้วย Cache**  
-*A cache memory simulator for educational and analytical purposes*  
+🚀 **A cache memory simulator for educational and analytical purposes**  
+*A tool for simulating and analyzing memory access behavior using different cache mapping techniques.*  
 
-![ตัวอย่างการทำงานของโปรเจค](https://i.postimg.cc/5jc8WwQQ/Screenshot-31-3-2025-34016-localhost.jpg)  
-*ตัวอย่างการทำงานของโปรเจค*  
-
----
-
-## 🎓 เกี่ยวกับโปรเจค (About the Project)
-โปรเจคนี้เป็นส่วนหนึ่งของรายวิชา **Computer Architecture (ComArch) Computer Engineering @ Kasetsart University Siracha Campus
-โดยมีเป้าหมายเพื่อศึกษาและวิเคราะห์ประสิทธิภาพของ **Cache Mapping Techniques** ผ่านการจำลองและเปรียบเทียบผลลัพธ์ของ **Direct Mapped, Set-Associative และ Fully Associative Cache**  
-
-🔹 **จุดประสงค์ของโปรเจค:**  
-✔ ศึกษาพฤติกรรมการเข้าถึงหน่วยความจำในระบบแคช  
-✔ เปรียบเทียบอัตรา **Cache Hit/Miss** ของแต่ละเทคนิค  
-✔ วิเคราะห์ผลกระทบของ **Cache Size, Block Size และ Replacement Policy**  
+![Project Screenshot](https://i.postimg.cc/5jc8WwQQ/Screenshot-31-3-2025-34016-localhost.jpg)  
+*Example of project in action*  
 
 ---
 
-## 📌 คุณสมบัติหลัก (Features)
-✅ **รองรับสถาปัตยกรรมแคช 3 รูปแบบ**  
+## 🎓 About the Project
+This project is part of the **Computer Architecture (ComArch) course at Kasetsart University Siracha Campus, Thailand**. It aims to study and analyze the performance of **Cache Mapping Techniques** by simulating and comparing the results of **Direct Mapped, Set-Associative, and Fully Associative Cache**.
+
+🔹 **Project Objectives:**  
+✔ Understand memory access behavior in cache systems  
+✔ Compare **Cache Hit/Miss rates** for different techniques  
+✔ Analyze the impact of **Cache Size, Block Size, and Replacement Policy**  
+
+---
+
+## 📌 Key Features
+✅ **Supports 3 Cache Architectures:**  
    - **Direct Mapped**  
    - **Set-Associative** (2-way, 4-way, 8-way, 16-way)  
    - **Fully Associative**  
 
-✅ **สามารถปรับแต่งพารามิเตอร์ได้**  
-   - ขนาดแคช (1-256 KB)  
-   - ขนาดบล็อก (16-256 ไบต์)  
-   - นโยบายแทนที่ (LRU, FIFO, Random)  
-   - จำนวน Way ใน Set-Associative Cache  
+✅ **Configurable Parameters:**  
+   - Cache Size (1-256 KB)  
+   - Block Size (16-256 Bytes)  
+   - Replacement Policy (LRU, FIFO, Random)  
+   - Number of Ways in Set-Associative Cache  
 
-✅ **แสดงผลและวิเคราะห์ผลลัพธ์**  
-   - อัตรา **Cache Hit/Miss**  
-   - กราฟแสดงผลการทำงานของแคช  
-   - แสดงรูปแบบการเข้าถึงหน่วยความจำ  
+✅ **Result Visualization & Analysis:**  
+   - **Cache Hit/Miss Rate**  
+   - Graphs displaying cache performance  
+   - Memory access pattern visualization  
 
 ---
 
-## 🛠️ วิธีการติดตั้ง (Installation)
+## 🛠️ Installation
 
-1. **โคลนโปรเจคจาก GitHub**  
+1. **Clone the project from GitHub:**  
 ```bash
 git clone https://github.com/yourusername/cache-insight.git
 cd cache-insight
 ```
 
-2. **ติดตั้ง Dependencies**  
+2. **Install dependencies:**  
 ```bash
 npm install
 ```
 
-3. **รันโปรเจค**  
+3. **Run the project:**  
 ```bash
 npm start
 ```
 
 ---
 
-## 🖥️ วิธีการใช้งาน (Usage)
+## 🖥️ How to Use
 
-1. ตั้งค่าพารามิเตอร์ **Cache Size, Block Size, Mapping Technique, Replacement Policy**  
-2. อัปโหลด **ไฟล์ CSV** ที่มีรายการ **Memory Address**  
-3. กดปุ่ม **Start Simulation**  
-4. วิเคราะห์ผลลัพธ์จาก **กราฟ Cache Hit/Miss**  
+1. Set parameters **Cache Size, Block Size, Mapping Technique, Replacement Policy**  
+2. Upload a **CSV file** containing **Memory Addresses**  
+3. Click **Start Simulation**  
+4. Analyze results using **Cache Hit/Miss Graphs**  
 
-📄 **รูปแบบไฟล์ CSV ที่รองรับ**  
+📄 **Supported CSV File Format:**  
 ```csv
 Address(Hex)
 0x00000000
@@ -74,13 +73,13 @@ Address(Hex)
 ...
 ```
 
-📌 **หมายเหตุ:**  
-- เมื่อกดปุ่ม **Show All** อาจต้องใช้เวลานานในการประมวลผล (หากไฟล์มีขนาดใหญ่)  
-- ระบบสามารถรับไฟล์ CSV ที่มีข้อมูล Address ได้ไม่จำกัด (ขึ้นอยู่กับประสิทธิภาพของเครื่องและเบราว์เซอร์)  
+📌 **Note:**  
+- Clicking **Show All** may take longer if the file is large  
+- The system can handle large CSV files, depending on the performance of the machine and browser  
 
 ---
 
-## 🌟 ตัวอย่างผลลัพธ์ (Examples)
+## 🌟 Example Results
 
 ### **Direct Mapped Cache**
 ![Direct Mapped](https://i.postimg.cc/c4ZQhcWP/Screenshot-31-3-2025-34410-localhost.jpg)  
@@ -90,7 +89,7 @@ Address(Hex)
 
 ---
 
-## 🧩 เทคโนโลยีที่ใช้ (Technologies)
+## 🧩 Technologies Used
 
 - **Frontend**: React.js + Tailwind CSS  
 - **Data Visualization**: Chart.js + react-chartjs-2  
@@ -100,25 +99,24 @@ Address(Hex)
 
 ---
 
-## 🗺️ แผนพัฒนาต่อไป (Roadmap)
-- [ ] เพิ่มการจำลองแบบ **N-way Set-Associative**  
-- [ ] เพิ่มฟังก์ชัน **ส่งออกผลลัพธ์เป็น PDF**  
-- [ ] เพิ่มตัวอย่างข้อมูลให้หลากหลายขึ้น  
-- [ ] รองรับ **Multi-Level Cache (L1, L2, L3)**  
+## 🗺️ Future Development (Roadmap)
+- [ ] Add **N-way Set-Associative simulation**  
+- [ ] Implement **result export as PDF**  
+- [ ] Provide more diverse example datasets  
+- [ ] Support **Multi-Level Cache (L1, L2, L3)**  
 
 ---
 
-## 👥 ผู้พัฒนา (Contributors)
-- [Your Name](https://github.com/yourusername)  
-- [Contributor 2](https://github.com/contributor2)  
-- [Contributor 3](https://github.com/contributor3)  
-
-📧 **ติดต่อเรา**: your.email@example.com  
+## 👥 Contributors
+- [Natthaphon P.](https://github.com/Nattopacirus)  
+- [IMLV1](https://github.com/IMLV1)  
+- [Picklock29](https://github.com/Picklock29)  
 
 ---
 
-## 🎓 ข้อมูลรายวิชา (Course Information)
-- **รายวิชา:** Computer Architecture
-- **สถาบัน:** Kasetsart University Siracha Campus 
-- **ภาคเรียน:** ภาคเรียนที่ 2 ปีการศึกษา 2024  
-- **ผู้สอน:** อาจารย์ Prasitthichai Narongleadrit 
+## 🎓 Course Information
+- **Course:** Computer Architecture  
+- **Institution:** Kasetsart University Siracha Campus, Thailand  
+- **Semester:** 2nd Semester, Academic Year 2024  
+- **Instructor:** Prasitthichai Narongleadrit  
+
