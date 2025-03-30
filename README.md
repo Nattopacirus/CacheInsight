@@ -1,70 +1,84 @@
-# Getting Started with Create React App
+```markdown
+# Cache Simulation Project
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+เครื่องจำลองการทำงานของแคชเมโมรีสำหรับการศึกษา 🚀  
+*A cache memory simulator for educational purposes*
 
-## Available Scripts
+![ตัวอย่างการทำงานของโปรเจค](https://i.postimg.cc/5jc8WwQQ/Screenshot-31-3-2025-34016-localhost.jpg)
 
-In the project directory, you can run:
+## 📌 คุณสมบัติหลัก (Features)
 
-### `npm start`
+- **รองรับสถาปัตยกรรมแคช 3 แบบ**:
+  - แคชแบบ Direct Mapped
+  - แคชแบบ Set-Associative
+  - แคชแบบ Fully Associative
+- **ปรับแต่งพารามิเตอร์ได้**:
+  - ขนาดแคช (1-256 KB)
+  - ขนาดบล็อก (16-256 ไบต์)
+  - นโยบายแทนที่ (LRU, FIFO, Random)
+  - ระดับความสัมพันธ์ (2-way, 4-way, 8-way, 16-way)
+- **วิเคราะห์ผลลัพธ์**:
+  - อัตราการ Hit/Miss
+  - กราฟแสดงความสัมพันธ์ระหว่างพารามิเตอร์ต่างๆ
+  - แสดงรูปแบบการเข้าถึงหน่วยความจำ
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🛠️ วิธีการติดตั้ง (Installation)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+1. โคลนโปรเจค:
+```bash
+git clone https://github.com/yourusername/cache-simulator.git
+cd cache-simulator
+```
 
-### `npm test`
+2. ติดตั้ง dependencies:
+```bash
+npm install
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+3. รันโปรเจค:
+```bash
+npm start
+```
 
-### `npm run build`
+## 🖥️ วิธีการใช้งาน (Usage)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1. กำหนดค่าพารามิเตอร์ในหน้า Simulation
+2. อัปโหลดไฟล์ CSV หรือใช้ข้อมูลตัวอย่าง
+3. กด "Start Simulation"
+4. วิเคราะห์ผลลัพธ์ในหน้าผลลัพธ์
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+**รูปแบบไฟล์ CSV:**
+```csv
+Address(Hex)
+0x00000000
+0x00000004
+0x00000008
+...
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## 🌟 ตัวอย่างผลลัพธ์ (Examples)
 
-### `npm run eject`
+![ตัวอย่างผลลัพธ์ Direct Mapped](https://i.postimg.cc/c4ZQhcWP/Screenshot-31-3-2025-34410-localhost.jpg)  
+*ผลลัพธ์การจำลองแบบ Direct Mapped*
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+![ตัวอย่างผลลัพธ์ Set-Associative](https://i.postimg.cc/nhr9SRPS/Screenshot-31-3-2025-34515-localhost.jpg)  
+*ผลลัพธ์การจำลองแบบ Set-Associative*
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🧩 เทคโนโลยีที่ใช้ (Technologies)
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- **Frontend**: React.js + Tailwind CSS
+- **Data Visualization**: Chart.js
+- **CSV Processing**: Papaparse
+- **Routing**: React Router
+- **AI Tool**: Chatgpt,deepseek,grok
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```
+**Roadmap** (แผนพัฒนาต่อไป):
+   ```markdown
+   ## 🗺️ แผนพัฒนาต่อไป (Roadmap)
+   - [ ] เพิ่มการจำลองแบบ N-way Set-Associative
+   - [ ] เพิ่มฟังก์ชันส่งออกผลลัพธ์เป็น PDF
+   - [ ] เพิ่มตัวอย่างข้อมูลให้หลากหลายขึ้น
+```
