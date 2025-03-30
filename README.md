@@ -1,70 +1,122 @@
-# Getting Started with Create React App
+# Cache Insight: Simulation & Analysis of Memory Access
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+🚀 **A cache memory simulator for educational and analytical purposes**  
+*A tool for simulating and analyzing memory access behavior using different cache mapping techniques.*  
 
-## Available Scripts
+![Project Screenshot](https://i.postimg.cc/5jc8WwQQ/Screenshot-31-3-2025-34016-localhost.jpg)  
+*Example of project in action*  
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 🎓 About the Project
+This project is part of the **Computer Architecture (ComArch) course at Kasetsart University Siracha Campus, Thailand**. It aims to study and analyze the performance of **Cache Mapping Techniques** by simulating and comparing the results of **Direct Mapped, Set-Associative, and Fully Associative Cache**.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+🔹 **Project Objectives:**  
+✔ Understand memory access behavior in cache systems  
+✔ Compare **Cache Hit/Miss rates** for different techniques  
+✔ Analyze the impact of **Cache Size, Block Size, and Replacement Policy**  
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## 📌 Key Features
+✅ **Supports 3 Cache Architectures:**  
+   - **Direct Mapped**  
+   - **Set-Associative** (2-way, 4-way, 8-way, 16-way)  
+   - **Fully Associative**  
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+✅ **Configurable Parameters:**  
+   - Cache Size (1-256 KB)  
+   - Block Size (16-256 Bytes)  
+   - Replacement Policy (LRU, FIFO, Random)  
+   - Number of Ways in Set-Associative Cache  
 
-### `npm run build`
+✅ **Result Visualization & Analysis:**  
+   - **Cache Hit/Miss Rate**  
+   - Graphs displaying cache performance  
+   - Memory access pattern visualization  
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🛠️ Installation
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+1. **Clone the project from GitHub:**  
+```bash
+git clone https://github.com/yourusername/cache-insight.git
+cd cache-insight
+```
 
-### `npm run eject`
+2. **Install dependencies:**  
+```bash
+npm install
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+3. **Run the project:**  
+```bash
+npm start
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🖥️ How to Use
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1. Set parameters **Cache Size, Block Size, Mapping Technique, Replacement Policy**  
+2. Upload a **CSV file** containing **Memory Addresses**  
+3. Click **Start Simulation**  
+4. Analyze results using **Cache Hit/Miss Graphs**  
 
-## Learn More
+📄 **Supported CSV File Format:**  
+```csv
+Address(Hex)
+0x00000000
+0x00000004
+0x00000008
+...
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+📌 **Note:**  
+- Clicking **Show All** may take longer if the file is large  
+- The system can handle large CSV files, depending on the performance of the machine and browser  
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
 
-### Code Splitting
+## 🌟 Example Results
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### **Direct Mapped Cache**
+![Direct Mapped](https://i.postimg.cc/c4ZQhcWP/Screenshot-31-3-2025-34410-localhost.jpg)  
 
-### Analyzing the Bundle Size
+### **Set-Associative Cache**
+![Set-Associative](https://i.postimg.cc/nhr9SRPS/Screenshot-31-3-2025-34515-localhost.jpg)  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## 🧩 Technologies Used
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- **Frontend**: React.js + Tailwind CSS  
+- **Data Visualization**: Chart.js + react-chartjs-2  
+- **CSV Processing**: PapaParse  
+- **Routing**: React Router  
+- **AI Tools Used**: ChatGPT, DeepSeek, Grok  
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 🗺️ Future Development (Roadmap)
+- [ ] Add **N-way Set-Associative simulation**  
+- [ ] Implement **result export as PDF**  
+- [ ] Provide more diverse example datasets  
+- [ ] Support **Multi-Level Cache (L1, L2, L3)**  
 
-### Deployment
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 👥 Contributors
+- [Natthaphon P.](https://github.com/Nattopacirus)  
+- [IMLV1](https://github.com/IMLV1)  
+- [Picklock29](https://github.com/Picklock29)  
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🎓 Course Information
+- **Course:** Computer Architecture  
+- **Institution:** Kasetsart University Siracha Campus, Thailand  
+- **Semester:** 2nd Semester, Academic Year 2024  
+- **Instructor:** Prasitthichai Narongleadrit  
+
