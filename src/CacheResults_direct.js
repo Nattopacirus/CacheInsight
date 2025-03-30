@@ -631,7 +631,7 @@ const CacheResults_Direct = () => {
       <div className="mt-12 w-full text-center text-gray-500 text-sm">
         <p>© {new Date().getFullYear()} Cache Insight. All rights reserved.</p>
         <p className="mt-1">
-          Built with for memory performance analysis.
+        Built for memory performance analysis.
           <a
             href="https://github.com/Nattopacirus/CacheInsight.git"
             className="text-indigo-600 hover:underline ml-1"
