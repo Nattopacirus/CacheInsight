@@ -398,7 +398,7 @@ const CacheSimulation = () => {
         <div className="mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-500">
           <p>© {new Date().getFullYear()} Cache Insight. All rights reserved.</p>
           <p className="mt-1">
-            BBuilt for memory performance analysis.
+            Built for memory performance analysis.
             <a href="https://github.com/Nattopacirus/CacheInsight.git" className="text-indigo-600 hover:underline ml-1" target="_blank" rel="noopener noreferrer">
               Learn more
             </a>
